@@ -15,6 +15,6 @@ mvn clean package install:install-file -Dfile=target/saiku-ui-3.0-SNAPSHOT.war  
 cd ../saiku-server
 mvn clean package
 cd ../saiku-bi-platform-plugin
-mvn clean package
+# mvn clean package
 cd ../saiku-bi-platform-plugin-p5
-mvn clean package
+# mvn clean package

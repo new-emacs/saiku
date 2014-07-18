@@ -295,7 +295,7 @@
       <dependency>
         <groupId>net.thucydides</groupId>
         <artifactId>thucydides-core</artifactId>
-        <version>0.9.245-SNAPSHOT</version>
+        <version>0.9.260</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -369,6 +369,10 @@
         <artifactId>hibernate-core</artifactId>
         <version>4.3.5.Final</version>
       </dependency>
-
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-mapper-asl</artifactId>
+        <version>1.5.0</version>
+      </dependency>
     </dependencies>
 </project>
