@@ -25,6 +25,8 @@ import org.saiku.repository.AclEntry;
 import org.saiku.repository.IRepositoryObject;
 import org.saiku.service.user.UserService;
 
+import javax.jcr.RepositoryException;
+
 public interface IDatasourceManager {
 
   public void load();
@@ -40,6 +42,8 @@ public interface IDatasourceManager {
 
   public boolean removeDatasource( String datasourceName );
 
+  public boolean removeSchema( String schemaName );
+
   public Map<String, SaikuDatasource> getDatasources();
 
   public SaikuDatasource getDatasource( String datasourceName );
@@ -54,11 +58,17 @@ public interface IDatasourceManager {
 
   public String getFileData(String file, String username, List<String> roles);
 
-  public String getInternalFileData(String file);
+  public String getInternalFileData(String file) throws RepositoryException;
 
   public String saveFile(String path, String content, String user, List<String> roles);
 
+  public String removeFile(String path, String user, List<String> roles);
+
+  public String moveFile(String source, String target, String user, List<String> roles);
+
   public String saveInternalFile(String path, String content, String type);
+  
+  public void removeInternalFile(String filePath);
 
   public List<IRepositoryObject> getFiles(String type, String username, List<String> roles);
 
@@ -71,4 +81,16 @@ public interface IDatasourceManager {
   public void setACL(String object, String acl, String username, List<String> roles);
 
   public void setUserService(UserService userService);
+
+  public List<org.saiku.database.dto.MondrianSchema> getInternalFilesOfFileType(String type) throws RepositoryException;
+
+  public void createFileMixin(String type) throws RepositoryException;
+
+  public byte[] exportRepository();
+
+  public void restoreRepository(byte[] data);
+
+    public boolean hasHomeDirectory(String name);
+
+    public void restoreLegacyFiles(byte[] data);
 }

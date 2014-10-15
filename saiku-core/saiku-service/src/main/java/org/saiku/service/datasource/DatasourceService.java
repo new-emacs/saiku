@@ -24,6 +24,8 @@ import org.saiku.datasources.connection.IConnectionManager;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.repository.AclEntry;
 import org.saiku.repository.IRepositoryObject;
+import org.saiku.service.importer.LegacyImporter;
+import org.saiku.service.importer.impl.LegacyImporterImpl;
 
 public class DatasourceService implements Serializable {
 
@@ -70,6 +72,10 @@ public class DatasourceService implements Serializable {
     datasources.removeDatasource(datasourceId);
   }
 
+  public void removeSchema(String schemaId) {
+        datasources.removeSchema(schemaId);
+  }
+
   public SaikuDatasource getDatasource(String datasourceName) {
     return datasources.getDatasource(datasourceName);
   }
@@ -88,7 +94,12 @@ public class DatasourceService implements Serializable {
 
   public String saveFile(String content, String path, String name, List<String> roles) { return datasources.saveFile(path, content, name, roles); }
 
-  public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
+  public String removeFile(String path, String name, List<String> roles) { return datasources.removeFile(path, name, roles); }
+
+    public String moveFile(String source, String target, String name, List<String> roles) { return datasources.moveFile(source, target, name, roles); }
+
+
+    public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
       return datasources.getFiles(type,username,roles);
   }
 
@@ -113,4 +124,24 @@ public class DatasourceService implements Serializable {
   public AclEntry getResourceACL(String file, String username, List<String> roles){
        return datasources.getACL(file, username, roles);
   }
+
+  public byte[] exportRepository(){
+      return datasources.exportRepository();
+  }
+
+  public void restoreRepository(byte[] data){
+      datasources.restoreRepository(data);
+  }
+
+    public void restoreLegacyFiles(byte[] data) {
+        datasources.restoreLegacyFiles(data);
+    }
+
+    public boolean hasHomeDirectory(String name){
+        return datasources.hasHomeDirectory(name);
+    }
+
+    public void createUserHome(String user){
+        datasources.createUser(user);
+    }
 }

@@ -65,7 +65,6 @@ public class SessionResource  {
 	{
 		try {
 			sessionService.login(req, username, password);
-			
 			return Response.ok().build();
 		}
 		catch (Exception e) {
@@ -95,7 +94,13 @@ public class SessionResource  {
         catch (Exception e){
             //throw new UnsupportedOperationException();
         }
-		return sess;
+        try {
+            userService.checkFolders();
+        }
+        catch (Exception e){
+            //TODO detect if plugin or not.
+        }
+        return sess;
 	}
 
 	@DELETE

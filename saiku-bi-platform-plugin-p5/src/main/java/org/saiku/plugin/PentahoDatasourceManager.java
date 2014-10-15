@@ -197,6 +197,10 @@ public class PentahoDatasourceManager implements IDatasourceManager {
         throw new UnsupportedOperationException();
     }
 
+    public boolean removeSchema(String schemaName) {
+        return false;
+    }
+
     public Map<String, SaikuDatasource> getDatasources() {
         return loadDatasources();
     }
@@ -229,6 +233,30 @@ public class PentahoDatasourceManager implements IDatasourceManager {
 
     }
 
+    public List<MondrianSchema> getInternalFilesOfFileType(String type) throws RepositoryException {
+        return null;
+    }
+
+    public void createFileMixin(String type) throws RepositoryException {
+
+    }
+
+    public byte[] exportRepository() {
+        return new byte[0];
+    }
+
+    public void restoreRepository(byte[] data) {
+
+    }
+
+    public boolean hasHomeDirectory(String name) {
+        return false;
+    }
+
+    public void restoreLegacyFiles(byte[] data) {
+
+    }
+
     public void setACL(String a, String b, String c, List<String> d) {
 
     }
@@ -252,6 +280,22 @@ public class PentahoDatasourceManager implements IDatasourceManager {
     public String saveFile(String path, String content, String user, List<String> roles) {
         throw new UnsupportedOperationException();
 
+    }
+
+    public String removeFile(String path, String user, List<String> roles) {
+        return null;
+    }
+
+    public String moveFile(String source, String target, String user, List<String> roles) {
+        return null;
+    }
+
+    public String saveInternalFile(String path, String content, String type) {
+        return null;
+    }
+
+    public void removeInternalFile(String filePath) {
+    
     }
 
     public String getInternalFileData(String file) {

@@ -2,13 +2,13 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
 
     <!--	<bean id="classpathDsManager"
             class="org.saiku.service.datasource.ClassPathResourceDatasourceManager">
             <property name="path" value="res:saiku-datasources" />
         </bean>-->
-    <bean id="repositoryDsManager" class="org.saiku.service.datasource.RepositoryDatasourceManager" init-method="load">
+    <bean id="repositoryDsManager" class="org.saiku.service.datasource.RepositoryDatasourceManager" init-method="load" destroy-method="unload">
         <property name="userService" ref="userServiceBean"/>
     </bean>
 
@@ -37,6 +37,7 @@
 
     <bean id="userServiceBean" class="org.saiku.service.user.UserService">
         <property name="jdbcUserDAO" ref="customerDAO"/>
+        <property name="datasourceService" ref="datasourceServiceBean"/>
         <property name="iDatasourceManager" ref="repositoryDsManager"/>
         <property name="adminRoles">
             <list>

@@ -2,6 +2,7 @@ package org.saiku.web.rest.resources;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
+import org.apache.commons.io.IOUtils;
 import org.saiku.database.dto.SaikuUser;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.service.datasource.DatasourceService;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +77,7 @@ public class AdminResource {
 
         try {
             datasourceService.addDatasource( json.toSaikuDataSource(), true );
-            return Response.ok().build();
+            return Response.ok().type("application/json").entity(json).build();
         }
         catch (Exception e){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage())
@@ -115,7 +117,7 @@ public class AdminResource {
             datasourceService.addDatasource(json.toSaikuDataSource(), false);
             return Response.ok().entity(json).type("application/json").build();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error adding data source", e);
             return Response.serverError().status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(e.getLocalizedMessage())
                     .type("text/plain").build();
@@ -130,7 +132,7 @@ public class AdminResource {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
         datasourceService.removeDatasource(id);
-        return Response.ok().build();
+        return Response.ok().type("application/json").entity(datasourceService.getDatasources()).build();
     }
 
     @GET
@@ -144,12 +146,12 @@ public class AdminResource {
         return Response.ok().entity(datasourceService.getAvailableSchema()).build();
     }
 
-    @POST
+    @PUT
     @Produces( {"application/json"})
     @Consumes("multipart/form-data")
-    @Path("/schema")
-    public Response uploadSchema(@FormDataParam("file") InputStream is, @FormDataParam("file") FormDataContentDisposition detail,
-                                 @FormDataParam("name") String name) {
+    @Path("/schema/{id}")
+    public Response uploadSchemaPut(@FormDataParam("file") InputStream is, @FormDataParam("file") FormDataContentDisposition detail,
+                                 @FormDataParam("name") String name, @PathParam("id") String id) {
         if(!userService.isAdmin()){
             return Response.status(Response.Status.FORBIDDEN).build();
         }
@@ -157,9 +159,32 @@ public class AdminResource {
         String schema = getStringFromInputStream(is);
         try {
             datasourceService.addSchema(schema, path, name);
-            return Response.ok().build();
+            return Response.ok().entity(datasourceService.getAvailableSchema()).build();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error uploading schema: "+name, e);
+            return Response.serverError().status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(e.getLocalizedMessage())
+                    .type("text/plain").build();
+        }
+
+    }
+
+    @POST
+    @Produces( {"application/json"})
+    @Consumes("multipart/form-data")
+    @Path("/schema/{id}")
+    public Response uploadSchema(@FormDataParam("file") InputStream is, @FormDataParam("file") FormDataContentDisposition detail,
+                                 @FormDataParam("name") String name, @PathParam("id") String id) {
+        if(!userService.isAdmin()){
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+        String path = "/datasources/" + name + ".xml";
+        String schema = getStringFromInputStream(is);
+        try {
+            datasourceService.addSchema(schema, path, name);
+            return Response.ok().entity(datasourceService.getAvailableSchema()).build();
+        } catch (Exception e) {
+            log.error("Error uploading schema: "+name, e);
             return Response.serverError().status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(e.getLocalizedMessage())
                     .type("text/plain").build();
@@ -180,8 +205,9 @@ public class AdminResource {
 
     @DELETE
     @Path("/schema/{id}")
-    public void deleteSchema(@PathParam("id") String id) {
-        //datasourceService.removeSchema(id);
+    public Response deleteSchema(@PathParam("id") String id) {
+        datasourceService.removeSchema(id);
+        return Response.status(Response.Status.NO_CONTENT).entity(datasourceService.getAvailableSchema()).build();
     }
 
     @GET
@@ -275,13 +301,13 @@ public class AdminResource {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("IO Exception when reading from input stream", e);
         } finally {
             if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("IO Exception closing input stream",e );
                 }
             }
         }
@@ -310,17 +336,51 @@ public class AdminResource {
             System.out.println(prop.getProperty("VERSION"));
             version = prop.getProperty("VERSION");
         } catch (IOException ex) {
-            ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            log.error("IO Exception when reading input stream", ex);
         }
         return Response.ok().entity(version).type("text/plain").build();
     }
 
+    @GET
+    @Produces("application/zip")
+    @Path("/backup")
+    public StreamingOutput getBackup(){
+        return new StreamingOutput() {
+            public void write(OutputStream output) throws IOException, WebApplicationException {
+                BufferedOutputStream bus = new BufferedOutputStream(output);
+                bus.write(datasourceService.exportRepository());
+                
+            }
+        };
+    }
+
+    @POST
+    @Produces("text/plain")
+    @Consumes("multipart/form-data")
+    @Path("/restore")
+    public Response postRestore(@FormDataParam("file") InputStream is, @FormDataParam("file") FormDataContentDisposition detail){
+        try {
+            byte[] bytes = IOUtils.toByteArray(is);
+            datasourceService.restoreRepository(bytes);
+            return Response.ok().entity("Restore Ok").type("text/plain").build();
+        } catch (IOException e) {
+            log.error("Error reading restore file", e);
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Restore Ok").type("text/plain").build();
+    }
+
+    @POST
+    @Produces("text/plain")
+    @Consumes("multipart/form-data")
+    @Path("/legacyfiles")
+    public Response postRestoreFiles(@FormDataParam("file") InputStream is, @FormDataParam("file") FormDataContentDisposition detail){
+        try {
+            byte[] bytes = IOUtils.toByteArray(is);
+            datasourceService.restoreLegacyFiles(bytes);
+            return Response.ok().entity("Restore Ok").type("text/plain").build();
+        } catch (IOException e) {
+            log.error("Error reading restore file", e);
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Restore Ok").type("text/plain").build();
+    }
 }

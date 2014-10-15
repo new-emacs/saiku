@@ -3,6 +3,10 @@ package org.saiku.database;
 import org.h2.jdbcx.JdbcDataSource;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.service.datasource.IDatasourceManager;
+import org.saiku.service.importer.LegacyImporter;
+import org.saiku.service.importer.impl.LegacyImporterImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletContext;
@@ -22,6 +26,7 @@ public class Database {
     @Autowired
     ServletContext servletContext;
     private JdbcDataSource ds;
+    private static final Logger log = LoggerFactory.getLogger(Database.class);
 
     IDatasourceManager dsm;
     public Database() {
@@ -44,6 +49,7 @@ public class Database {
         initDB();
         loadUsers();
         loadFoodmart();
+        loadLegacyDatasources();
     }
 
     private void initDB() {
@@ -60,7 +66,7 @@ public class Database {
         String url = servletContext.getInitParameter("foodmart.url");
         String user = servletContext.getInitParameter("foodmart.user");
         String pword = servletContext.getInitParameter("foodmart.password");
-        if(url!=null) {
+        if(url!=null && !url.equals("[[foodmartplaceholder]]")) {
             JdbcDataSource ds2 = new JdbcDataSource();
             ds2.setURL(url);
             ds2.setUser(user);
@@ -79,12 +85,12 @@ public class Database {
                 try {
                     schema = readFile("../../data/FoodMart4.xml", StandardCharsets.UTF_8);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error("Can't read schema file",e);
                 }
                 try {
                     dsm.addSchema(schema, "/datasources/foodmart4.xml", null);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Can't add schema file to repo", e);
                 }
                 Properties p = new Properties();
                 p.setProperty("driver", "mondrian.olap4j.MondrianOlap4jDriver");
@@ -97,7 +103,7 @@ public class Database {
                 try {
                     dsm.addDatasource(ds);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Can't add data source to reop",e);
                 }
             } else {
                 Statement statement = c.createStatement();
@@ -133,7 +139,8 @@ public class Database {
         ResultSet result = statement.executeQuery("select count(*) as c from LOG where log = 'insert users'");
         result.next();
         if (result.getInt("c") == 0) {
-
+            dsm.createUser("admin");
+            dsm.createUser("smith");
             statement.execute("INSERT INTO users(username,password,email, enabled)\n"
                     + "VALUES ('admin','admin', 'test@admin.com',TRUE);" +
                     "INSERT INTO users(username,password,enabled)\n"
@@ -147,6 +154,24 @@ public class Database {
                             + "VALUES (2, 'smith', 'ROLE_USER');");
 
             statement.execute("INSERT INTO LOG(log) VALUES('insert users');");
+        }
+
+
+    }
+
+    public void loadLegacyDatasources() throws SQLException {
+        Connection c = ds.getConnection();
+
+        Statement statement = c.createStatement();
+        ResultSet result = statement.executeQuery("select count(*) as c from LOG where log = 'insert datasources'");
+
+        result.next();
+        if (result.getInt("c") == 0) {
+            LegacyImporter l = new LegacyImporterImpl(dsm);
+            l.importSchema();
+            l.importDatasources();
+            statement.execute("INSERT INTO LOG(log) VALUES('insert datasources');");
+
         }
     }
 }

@@ -3,17 +3,17 @@
 	<parent>
 		<artifactId>saiku-core</artifactId>
 		<groupId>org.saiku</groupId>
-		<version>3.0-SNAPSHOT</version>
+		<version>3.0-GA</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.saiku</groupId>
 	<artifactId>saiku-webapp</artifactId>
-	<version>3.0-SNAPSHOT</version>
+	<version>3.0-GA</version>
 	<name>saiku - webapp</name>
 	<packaging>war</packaging>
 
 	<properties>
-		<spring.version>3.0.3.RELEASE</spring.version>
+		<spring.version>3.2.1.RELEASE</spring.version>
 		<spring.security.version>3.0.3.RELEASE</spring.security.version>
 		<enunciate.version>1.28</enunciate.version>
 		<jersey.version>1.11</jersey.version>
@@ -22,7 +22,31 @@
 	<build>
 		<!-- <outputDirectory>target/WEB-INF/classes</outputDirectory> -->
 		<plugins>
-
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+            <execution>
+            <id>copy</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+            <artifactItems>
+                <artifactItem>
+                <groupId>org.saiku</groupId>
+                <artifactId>saiku-web</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <classifier>sources</classifier>
+                <outputDirectory>target/saiku-webapp-3.0-GA/WEB-INF/lib/</outputDirectory>
+            </artifactItem>
+            </artifactItems>
+            </configuration>
+            </execution>
+            </executions>
+        </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
@@ -42,7 +66,7 @@
 								<copy todir="target/${project.artifactId}-foodmart-${project.version}">
 									<fileset dir="target/${project.artifactId}-${project.version}/" />
 								</copy>
-								<unzip
+								<!--<unzip
 									dest="target/${project.artifactId}-foodmart-${project.version}/WEB-INF/classes/">
 									<fileset dir="${basedir}/../util/">
 										<include name="foodmart.zip" />
@@ -61,7 +85,7 @@
 									<fileset dir="${basedir}/../util/">
 										<include name="foodmart" />
 									</fileset>
-								</copy>
+								</copy>-->
 								<zip
 									destfile="target/${project.artifactId}-foodmart-${project.version}.war">
 									<zipfileset
@@ -132,6 +156,27 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>org.jasig.cas.client</groupId>
+			<artifactId>cas-client-core</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jasig.cas.client</groupId>
+			<artifactId>cas-client-integration-tomcat-common</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jasig.cas.client</groupId>
+			<artifactId>cas-client-integration-tomcat-v7</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-cas</artifactId>
+		        <version>${spring.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.saiku</groupId>
 			<artifactId>saiku-service</artifactId>
@@ -328,7 +373,23 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>5.1.17</version>
 		</dependency>
-		<dependency>
+        <dependency>
+            <groupId>net.sourceforge.jtds</groupId>
+            <artifactId>jtds</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.3-1102-jdbc41</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <version>0.13.1</version>
+        </dependency>
+
+        <dependency>
 			<groupId>commons-dbcp</groupId>
 			<artifactId>commons-dbcp</artifactId>
 			<version>1.4</version>

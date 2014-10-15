@@ -52,12 +52,18 @@ public interface IRepositoryManager {
 
     javax.jcr.Node saveFile(Object file, String path, String user, String type, List<String> roles) throws RepositoryException;
 
+    void removeFile(String path, String user, List<String> roles) throws RepositoryException;
+
+    void moveFile(String source, String target, String user, List<String> roles) throws RepositoryException;
+
+
     javax.jcr.Node saveInternalFile(Object file, String path, String type) throws RepositoryException;
 
     String getFile(String s, String username, List<String> roles) throws RepositoryException;
 
     String getInternalFile(String s) throws RepositoryException;
 
+    void removeInternalFile(String s) throws RepositoryException;
 
     List<org.saiku.database.dto.MondrianSchema> getAllSchema() throws RepositoryException;
 
@@ -67,7 +73,7 @@ public interface IRepositoryManager {
 
     byte[] exportRepository() throws RepositoryException, IOException;
 
-    void restoreRepository(String xml) throws RepositoryException, IOException;
+    void restoreRepository(byte[] xml) throws RepositoryException, IOException;
 
     RepositoryFile getFile(String fileUrl);
 
@@ -77,7 +83,11 @@ public interface IRepositoryManager {
 
     AclEntry getACL(String object, String username, List<String> roles);
 
-    void setACL(String object, String acl, String username, List<String> roles);
+    void setACL(String object, String acl, String username, List<String> roles) throws RepositoryException;
 
+    List<org.saiku.database.dto.MondrianSchema> getInternalFilesOfFileType(String type) throws RepositoryException;
 
+    void createFileMixin(String type) throws RepositoryException;
+
+    Object getRepositoryObject();
 }

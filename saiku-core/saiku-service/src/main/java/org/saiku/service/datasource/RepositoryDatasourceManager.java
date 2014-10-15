@@ -20,10 +20,16 @@ import org.saiku.database.dto.MondrianSchema;
 import org.saiku.datasources.connection.RepositoryFile;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.repository.*;
+import org.saiku.service.importer.LegacyImporter;
+import org.saiku.service.importer.impl.LegacyImporterImpl;
 import org.saiku.service.user.UserService;
 import org.saiku.service.util.exception.SaikuServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -34,12 +40,12 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
     private Map<String, SaikuDatasource> datasources =
             Collections.synchronizedMap(new HashMap<String, SaikuDatasource>());
     private UserService userService;
-
+    private static final Logger log = LoggerFactory.getLogger(RepositoryDatasourceManager.class);
     public void load() {
         try {
             irm.start(userService);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Could not start repo", e);
         }
         datasources.clear();
         try {
@@ -48,7 +54,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
             try {
                 exporteddatasources = irm.getAllDataSources();
             } catch (RepositoryException e1) {
-                e1.printStackTrace();
+                log.error("Could not export data sources", e1);
             }
 
             if (exporteddatasources != null) {
@@ -100,7 +106,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
                 datasources.put(datasource.getName(), datasource);
 
             } catch (RepositoryException e) {
-                e.printStackTrace();
+                log.error("Could not add data source"+ datasource.getName(), e);
             }
 
         }
@@ -112,7 +118,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         try {
             ds = irm.getAllDataSources();
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Could not get all data sources");
         }
 
         if (ds != null) {
@@ -129,6 +135,31 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
             return false;
         }
 
+
+
+
+    }
+
+    public boolean removeSchema(String schemaName) {
+        List<org.saiku.database.dto.MondrianSchema> s = null;
+        try {
+            s = irm.getAllSchema();
+        } catch (RepositoryException e) {
+            log.error("Could not get All Schema", e);
+        }
+
+        if (s != null) {
+            for(MondrianSchema data : s){
+                if(data.getName().equals(schemaName)){
+                    irm.deleteFile(data.getPath());
+                    break;
+                }
+            }
+            return true;
+        }
+        else{
+            return false;
+        }
 
 
 
@@ -151,7 +182,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         try {
             return irm.getAllSchema();
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Could not get all Schema", e);
         }
         return null;
     }
@@ -170,18 +201,16 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         try {
             return irm.getFile(file, username, roles);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Could not get file "+file, e);
         }
         return null;
     }
 
-    public String getInternalFileData(String file) {
-        try {
+    public String getInternalFileData(String file) throws RepositoryException {
+
             return irm.getInternalFile(file);
-        } catch (RepositoryException e) {
-            e.printStackTrace();
-        }
-        return null;
+
+
     }
 
     public String saveFile(String path, String content, String user, List<String> roles) {
@@ -189,8 +218,28 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
             irm.saveFile(content, path, user, "nt:saikufiles", roles);
             return "Save Okay";
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Save Failed",e );
             return "Save Failed: " + e.getLocalizedMessage();
+        }
+    }
+
+    public String removeFile(String path, String user, List<String> roles) {
+        try {
+            irm.removeFile(path, user, roles);
+            return "Remove Okay";
+        } catch (RepositoryException e) {
+            log.error("Save Failed", e);
+            return "Save Failed: " + e.getLocalizedMessage();
+        }
+    }
+
+    public String moveFile(String source, String target, String user, List<String> roles) {
+        try {
+            irm.moveFile(source, target, user, roles);
+            return "Move Okay";
+        } catch (RepositoryException e) {
+            log.error("Move Failed", e);
+            return "Move Failed: " + e.getLocalizedMessage();
         }
     }
 
@@ -203,12 +252,21 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
             return "Save Failed: " + e.getLocalizedMessage();
         }
     }
+    
+    public void removeInternalFile(String filePath) {
+        try{
+            irm.removeInternalFile(filePath);
+        } catch(RepositoryException e) {
+            log.error("Remove file failed: " + filePath);
+            e.printStackTrace();
+        }
+    }
 
     public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
         try {
             return irm.getAllFiles(type, username, roles);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Get failed", e);
         }
         return null;
     }
@@ -217,7 +275,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         try {
             irm.createUser(username);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Create User Failed", e);
         }
     }
 
@@ -225,7 +283,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         try {
             irm.deleteFolder(folder);
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            log.error("Delete User Failed", e);
         }
     }
 
@@ -234,12 +292,72 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
     }
 
     public void setACL(String object, String acl, String username, List<String> roles) {
-        irm.setACL(object, acl, username, roles);
+        try {
+            irm.setACL(object, acl, username, roles);
+        } catch (RepositoryException e) {
+            log.error("Set ACL Failed", e);
+        }
     }
 
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public List<MondrianSchema> getInternalFilesOfFileType(String type){
+        try {
+            return irm.getInternalFilesOfFileType(type);
+        } catch (RepositoryException e) {
+            log.error("Get internal file failed", e);
+        }
+        return null;
+    }
+
+    public void createFileMixin(String type) throws RepositoryException {
+        irm.createFileMixin(type);
+    }
+
+    public byte[] exportRepository(){
+        try {
+            return irm.exportRepository();
+
+        } catch (RepositoryException e) {
+            log.error("could not export repository", e);
+        } catch (IOException e) {
+            log.error("could not export repository IO issue", e);
+        }
+        return null;
+    }
+
+    public void restoreRepository(byte[] data) {
+        try {
+            irm.restoreRepository(data);
+        }
+        catch (Exception e){
+            log.error("Could not restore export", e);
+        }
+    }
+
+    public boolean hasHomeDirectory(String name) {
+        try{
+            Node eturn = irm.getHomeFolder(name);
+            if (eturn!=null){
+                return true;
+            }
+            return false;
+        } catch (RepositoryException e) {
+            log.error("could not get home directory");
+        }
+        return false;
+    }
+
+    public void restoreLegacyFiles(byte[] data) {
+        LegacyImporter l = new LegacyImporterImpl(null);
+        l.importLegacyReports(irm, data);
+    }
+
+    public Object getRepository() {
+        return irm.getRepositoryObject();
     }
 }
 

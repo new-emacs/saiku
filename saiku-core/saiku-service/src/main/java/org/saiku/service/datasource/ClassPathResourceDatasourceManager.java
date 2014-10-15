@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.saiku.repository.AclEntry;
+
+import javax.jcr.RepositoryException;
+
 public class ClassPathResourceDatasourceManager implements IDatasourceManager {
 
   private URL repoURL;
@@ -171,7 +174,11 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
     }
   }
 
-  public Map<String, SaikuDatasource> getDatasources() {
+    public boolean removeSchema(String schemaName) {
+        return false;
+    }
+
+    public Map<String, SaikuDatasource> getDatasources() {
     return datasources;
   }
 
@@ -216,12 +223,24 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
         return null;
     }
 
+    public String removeFile(String path, String user, List<String> roles) {
+        return null;
+    }
+
+    public String moveFile(String source, String target, String user, List<String> roles) {
+        return null;
+    }
+
     public String saveInternalFile(String path, String content, String type) {
         return null;
     }
 
     public String saveInternalFile(String path, String content) {
         return null;
+    }
+    
+    public void removeInternalFile(String filePath) {
+      
     }
 
     public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
@@ -249,6 +268,31 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
     }
 
     public void setUserService(UserService userService) {
+
+    }
+
+    public List<MondrianSchema> getInternalFilesOfFileType(String type) throws RepositoryException {
+        return null;
+    }
+
+    public void createFileMixin(String type) throws RepositoryException {
+        
+    }
+
+    public byte[] exportRepository() {
+        return new byte[0];
+    }
+
+    public void restoreRepository(byte[] data) {
+        
+    }
+
+    public boolean hasHomeDirectory(String name) {
+
+        return false;
+    }
+
+    public void restoreLegacyFiles(byte[] data) {
 
     }
 
