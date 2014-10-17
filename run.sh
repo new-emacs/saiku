@@ -17,6 +17,7 @@ function do_build(){
     #git pull origin 3.0.1-SNAPSHOT
     # $git subtree pull --prefix=saiku-ui
     cd ../saiku-ui
+    npm install
     mvn clean package install:install-file -Dfile=target/saiku-ui-3.0.1-SNAPSHOT.war  -DgroupId=org.saiku -DartifactId=saiku-ui -Dversion=3.0.1-SNAPSHOT -Dpackaging=war
     pause
     cd ../saiku-server
@@ -24,8 +25,16 @@ function do_build(){
 }
 
 function do_run(){
+    cw kill 8015
     cd saiku-server
-    mvn run
+    mvn -o install
+    mvn jetty:run &
+}
+
+function do_start_ui(){
+    cw kill 80
+    cd ../saiku-ui
+    node server.js 80 localhost 8015
 }
 
 
@@ -38,17 +47,15 @@ for OPT in $@ ; do
         build)
             do_build
             ;;
-        run)
+        server)
             do_run
             ;;
-        saiku)
-            do_mvn_jetty_run_saiku
-            ;;
-        etl)
-            do_mvn_jetty_run_etl
+        ui)
+            do_start_ui
             ;;
         all)
-            do_start_all
+            do_run
+            do_start_ui
             ;;
         help)
             do_help
