@@ -20,30 +20,30 @@
 					<argLine> -Xmx512m</argLine>
 				</configuration>
 			</plugin>
-			<!-- <plugin> -->
-			<!-- 	<groupId>org.apache.maven.plugins</groupId> -->
-			<!-- 	<artifactId>maven-dependency-plugin</artifactId> -->
-			<!-- 	<executions> -->
-			<!-- 		<execution> -->
-			<!-- 			<id>copy</id> -->
-			<!-- 			<phase>process-resources</phase> -->
-			<!-- 			<goals> -->
-			<!-- 				<goal>copy</goal> -->
-			<!-- 			</goals> -->
-			<!-- 			<configuration> -->
-			<!-- 				<artifactItems> -->
-			<!-- 					<artifactItem> -->
-			<!-- 						<groupId>mondrian-data-foodmart-hsql</groupId> -->
-			<!-- 						<artifactId>mondrian-data-foodmart-hsql</artifactId> -->
-  			<!-- 						<version>0.2</version> -->
-			<!-- 						<type>jar</type> -->
-			<!-- 						<outputDirectory>target/</outputDirectory> -->
-			<!-- 					</artifactItem> -->
-			<!-- 				</artifactItems> -->
-			<!-- 			</configuration> -->
-			<!-- 		</execution> -->
-			<!-- 	</executions> -->
-			<!-- </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>mondrian-data-foodmart-hsql</groupId>
+									<artifactId>mondrian-data-foodmart-hsql</artifactId>
+  									<version>0.1</version>
+									<type>jar</type>
+									<outputDirectory>target/</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			 <plugin>
 			        <groupId>org.apache.maven.plugins</groupId>
 			        <artifactId>maven-source-plugin</artifactId>
@@ -339,12 +339,12 @@
 			<version>5.1.17</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- 	<groupId>mondrian-data-foodmart-hsql</groupId> -->
-  		<!-- 	<artifactId>mondrian-data-foodmart-hsql</artifactId> -->
-  		<!-- 	<version>0.2</version> -->
-		<!-- 	<scope>test</scope> -->
-		<!-- </dependency> -->
+		<dependency>
+			<groupId>mondrian-data-foodmart-hsql</groupId>
+  			<artifactId>mondrian-data-foodmart-hsql</artifactId>
+  			<version>0.1</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
   			<artifactId>jackson-jaxrs</artifactId>
