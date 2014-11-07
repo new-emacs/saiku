@@ -54,8 +54,10 @@ for OPT in $@ ; do
             do_start_ui
             ;;
         all)
-            do_run
-            do_start_ui
+            ./saiku run server stop
+            ./saiku build all
+            ./saiku run server start
+            tail -f /home/will/saiku/saiku-server/target/dist/saiku-server/tomcat/logs/catalina.out &
             ;;
         help)
             do_help
