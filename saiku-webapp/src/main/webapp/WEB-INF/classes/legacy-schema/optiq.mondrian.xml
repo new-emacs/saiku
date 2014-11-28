@@ -1,0 +1,16 @@
+<Schema name="Optiq">
+  <Cube name="userInfo" caption="userinfo" visible="true" cache="true" enabled="true">
+    <Table name="factUserInfo">
+    </Table>
+    <Dimension visible="true" foreignKey="gender" highCardinality="false" name="Gender" caption="Gender">
+      <Hierarchy visible="true" hasAll="true" allMemberName="All Genders" primaryKey="value">
+        <Table name="dimGender">
+        </Table>
+        <Level name="Gender" visible="true" column="name" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="Count Person" column="userId" datatype="Integer" formatString="#,###" aggregator="count">
+    </Measure>
+  </Cube>
+</Schema>

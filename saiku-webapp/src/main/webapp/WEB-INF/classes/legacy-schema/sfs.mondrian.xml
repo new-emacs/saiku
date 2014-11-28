@@ -1,0 +1,86 @@
+<Schema name="JDCompass">
+  <Cube name="SFSForecast" caption="&#39044;&#27979;&#38144;&#37327;" visible="true" description="&#39044;&#27979;&#38144;&#37327;" cache="true" enabled="true">
+    <Table name="fact_forecast_result">
+    </Table>
+    <Dimension type="StandardDimension" visible="true" foreignKey="category_id_3" highCardinality="false" name="Categories" caption="&#20998;&#31867;">
+      <Hierarchy visible="true" hasAll="true" allMemberName="AllCategories" allMemberCaption="&#25152;&#26377;&#20998;&#31867;" primaryKey="code_level_3">
+        <Table name="dim_categories">
+        </Table>
+        <Level name="&#19968;&#32423;&#20998;&#31867;&#32534;&#30721;" visible="true" column="code_level_1" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#19968;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="name_level_1" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#20108;&#32423;&#20998;&#31867;&#32534;&#30721;" visible="true" column="code_level_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#20108;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="name_level_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#19977;&#32423;&#20998;&#31867;&#32534;&#30721;" visible="true" column="code_level_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#19977;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="name_level_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="StandardDimension" visible="true" foreignKey="dept_level_3" highCardinality="false" name="Department" caption="&#37096;&#38376;">
+      <Hierarchy visible="true" hasAll="true" allMemberName="AllDepatment" allMemberCaption="&#25152;&#26377;&#37096;&#38376;" primaryKey="dept_level_3">
+        <Table name="dim_department_with_id">
+        </Table>
+        <Level name="&#19968;&#32423;&#37096;&#38376;&#21517;&#31216;" visible="true" column="dept_name_1" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#20108;&#32423;&#37096;&#38376;&#21517;&#31216;" visible="true" column="dept_name_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="&#19977;&#32423;&#37096;&#38376;&#21517;&#31216;" visible="true" column="dept_name_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="TimeDimension" visible="true" foreignKey="statistic_date" highCardinality="false" name="Time" caption="&#26102;&#38388;">
+      <Hierarchy name="&#25353;&#23395;&#24230;&#32479;&#35745;" visible="true" hasAll="true" allMemberName="&#25152;&#26377;&#26102;&#38388;" primaryKey="dim_date">
+        <Table name="dim_time_v2">
+        </Table>
+        <Level name="&#24180;" visible="true" column="dim_year" type="String" uniqueMembers="false" levelType="TimeYears" hideMemberIf="Never">
+        </Level>
+        <Level name="&#23395;&#24230;" visible="true" column="quarter" type="String" uniqueMembers="true" levelType="TimeQuarters" hideMemberIf="Never">
+        </Level>
+        <Level name="&#26376;" visible="true" column="dim_month" type="Numeric" uniqueMembers="false" levelType="TimeMonths" hideMemberIf="Never">
+        </Level>
+        <Level name="&#26085;" visible="true" column="dim_day" type="String" uniqueMembers="false" levelType="TimeDays" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+      <Hierarchy name="&#25353;&#21608;&#32479;&#35745;" visible="true" hasAll="true" allMemberName="&#25152;&#26377;&#26102;&#38388;" primaryKey="dim_date">
+        <Table name="dim_time_v2">
+        </Table>
+        <Level name="&#24180;" visible="true" column="dim_year" type="String" uniqueMembers="false" levelType="TimeYears" hideMemberIf="Never">
+        </Level>
+        <Level name="&#21608;" visible="true" column="week" type="Numeric" uniqueMembers="true" levelType="TimeWeeks" hideMemberIf="Never">
+        </Level>
+        <Level name="&#26085;" visible="true" column="dim_day" type="Numeric" uniqueMembers="false" levelType="TimeDays" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="StandardDimension" visible="true" foreignKey="sales_type_id" highCardinality="false" name="Type" caption="&#26469;&#28304;">
+      <Hierarchy visible="true" hasAll="true" allMemberName="AllType" allMemberCaption="&#25152;&#26377;&#26469;&#28304;" primaryKey="sales_type_id">
+        <Table name="dim_forecast_pop">
+        </Table>
+        <Level name="&#26469;&#28304;" visible="true" column="sales_type_name" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="&#39044;&#27979;GMV" column="forecast_gmv" datatype="Numeric" formatString="#,###" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#35745;&#21010;GMV" column="plan_gmv" datatype="Numeric" formatString="#,###" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#23454;&#38469;GMV" column="real_gmv" datatype="Numeric" formatString="#,###" aggregator="sum" visible="true">
+    </Measure>
+  </Cube>
+  <Role name="ROLE_ADMIN">
+    <SchemaGrant access="all">
+      <CubeGrant cube="SFSForecast" access="all">
+      </CubeGrant>
+    </SchemaGrant>
+  </Role>
+  <Role name="ROLE_USER">
+    <SchemaGrant access="all">
+      <CubeGrant cube="SFSForecast" access="all">
+      </CubeGrant>
+    </SchemaGrant>
+  </Role>
+</Schema>

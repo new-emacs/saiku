@@ -1,0 +1,9 @@
+type=OLAP
+name=spark
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:hive2://localhost:10000;Catalog=res:legacy-schema/optiq.mondrian.xml;JdbcDrivers=org.apache.hive.jdbc.HiveDriver;DynamicSchemaProcessor=mondrian.i18n.LocalizingDynamicSchemaProcessor;Locale=zh_CN;
+username=root
+password=
+security.enabled=true
+security.type=one2one
+

@@ -1,0 +1,133 @@
+<Schema name="Goods" description="&#21830;&#21697;">
+  <Dimension type="TimeDimension" visible="true" highCardinality="false" name="&#26102;&#38388;" description="&#26102;&#38388;&#32500;">
+    <Hierarchy name="&#24180;&#26376;&#21608;" visible="true" hasAll="true" allMemberName="AllWeeks" allMemberCaption="&#20840;&#37096;&#26102;&#38388;" primaryKey="dim_date" description="&#24180;&#26376;&#21608;">
+      <Table name="dim_time_v2">
+      </Table>
+      <Level name="&#24180;" visible="true" column="dim_year" type="Integer" uniqueMembers="true" levelType="TimeYears" hideMemberIf="Never" description="&#24180;">
+      </Level>
+      <Level name="&#26376;" visible="true" column="dim_month" type="Integer" uniqueMembers="false" levelType="TimeMonths" hideMemberIf="Never" description="&#26376;">
+      </Level>
+      <Level name="&#21608;" visible="true" column="week" type="Integer" uniqueMembers="false" levelType="TimeWeeks" hideMemberIf="Never" description="&#21608;">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="&#37096;&#38376;" description="&#37096;&#38376;&#32500;">
+    <Hierarchy visible="true" hasAll="true" allMemberName="AllDepartments" allMemberCaption="&#25152;&#26377;&#37096;&#38376;" primaryKey="dept_id">
+      <View alias="view_dim_department">
+        <SQL dialect="mysql">
+          <![CDATA[SELECT * FROM dim_department_market]]>
+        </SQL>
+      </View>
+      <Level name="&#19968;&#32423;&#37096;&#38376;" visible="true" column="dept_id_1" nameColumn="dept_level_1" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" description="&#19968;&#32423;&#37096;&#38376;&#21517;&#31216;">
+      </Level>
+      <Level name="&#20108;&#32423;&#37096;&#38376;" visible="true" column="dept_id_2" nameColumn="dept_level_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#20108;&#32423;&#37096;&#38376;&#21517;&#31216;">
+      </Level>
+      <Level name="&#19977;&#32423;&#37096;&#38376;" visible="true" column="dept_id_3" nameColumn="dept_level_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#19977;&#32423;&#37096;&#38376;&#21517;&#31216;">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="&#21830;&#21697;&#21697;&#31867;" description="&#21830;&#21697;&#21697;&#31867;&#32500;">
+    <Hierarchy name="&#21697;&#31867;Sku" visible="true" hasAll="true" allMemberName="ALLSkus" allMemberCaption="&#25152;&#26377;&#21830;&#21697;" primaryKey="item_sku_id" description="&#21697;&#31867;Sku">
+      <View alias="view_dim_categories_sku">
+        <SQL dialect="mysql">
+          <![CDATA[SELECT * FROM dim_categories_brand_sku]]>
+        </SQL>
+      </View>
+      <Level name="&#19968;&#32423;&#21697;&#31867;" visible="true" column="code_level_1" nameColumn="name_level_1" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" description="&#19968;&#32423;&#21697;&#31867;">
+      </Level>
+      <Level name="&#20108;&#32423;&#21697;&#31867;" visible="true" column="code_level_2" nameColumn="name_level_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#20108;&#32423;&#21697;&#31867;">
+      </Level>
+      <Level name="&#19977;&#32423;&#21697;&#31867;" visible="true" column="code_level_3" nameColumn="name_level_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#19977;&#32423;&#21697;&#31867;">
+      </Level>
+      <Level name="&#21697;&#29260;" visible="true" column="brand_code" nameColumn="barndname_full" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#21697;&#29260;">
+      </Level>
+      <Level name="&#21830;&#21697;Sku" visible="true" column="item_sku_id" nameColumn="item_sku_name" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#21830;&#21697;Sku">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="&#38144;&#21306;" description="&#38144;&#21306;&#32500;">
+    <Hierarchy visible="true" hasAll="true" allMemberName="AllRegions" allMemberCaption="&#25152;&#26377;&#21306;&#22495;" primaryKey="dim_province_id">
+      <Table name="dim_sale_area">
+      </Table>
+      <Level name="&#21306;&#22495;" visible="true" column="dim_area_id" nameColumn="dim_area_name" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" description="&#21306;&#22495;">
+      </Level>
+      <Level name="&#30465;&#20221;" visible="true" column="dim_province_id" nameColumn="dim_province_name" type="Integer" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#30465;&#20221;">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="&#21830;&#21697;&#31867;&#22411;" description="&#21830;&#21697;&#31867;&#22411;&#32500;">
+    <Hierarchy visible="true" hasAll="true" allMemberName="AllDataTypes" allMemberCaption="&#25152;&#26377;&#31867;&#22411;" primaryKey="data_type">
+      <InlineTable alias="severity">
+        <ColumnDefs>
+          <ColumnDef name="data_type" type="Integer">
+          </ColumnDef>
+        </ColumnDefs>
+        <Rows>
+          <Row>
+            <Value column="data_type">
+              <![CDATA[1]]>
+            </Value>
+          </Row>
+          <Row>
+            <Value column="data_type">
+              <![CDATA[3]]>
+            </Value>
+          </Row>
+        </Rows>
+      </InlineTable>
+      <Level name="&#21830;&#21697;&#31867;&#22411;" visible="true" column="data_type" type="Integer" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" description="&#21830;&#21697;&#31867;&#22411;">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="&#24211;&#25151;" description="&#24211;&#25151;&#32500;">
+    <Hierarchy visible="true" hasAll="true" allMemberName="AllStores" allMemberCaption="&#25152;&#26377;&#24211;&#25151;" primaryKey="dim_store_num">
+      <Table name="dim_store">
+      </Table>
+      <Level name="&#26426;&#26500;" visible="true" column="settle_org_num" nameColumn="settleame" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" description="&#26426;&#26500;">
+      </Level>
+      <Level name="&#37197;&#36865;&#20013;&#24515;" visible="true" column="dim_delv_center_num" nameColumn="dim_delv_center_name" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#37197;&#36865;&#20013;&#24515;">
+      </Level>
+      <Level name="&#24211;&#25151;" visible="true" column="dim_store_num" nameColumn="dim_store_name" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" description="&#24211;&#25151;&#32500;">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Cube name="HotCommodity" visible="true" description="&#28909;&#38144;&#21830;&#21697;" cache="true" enabled="true">
+    <View alias="view_fact_hot_commodity">
+      <SQL dialect="mysql">
+        <![CDATA[SELECT * FROM fact_commodity_rexiao]]>
+      </SQL>
+    </View>
+    <DimensionUsage source="&#26102;&#38388;" name="&#26102;&#38388;" visible="true" foreignKey="data_date" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="&#37096;&#38376;" name="&#37096;&#38376;" visible="true" foreignKey="dept_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="&#21830;&#21697;&#21697;&#31867;" name="&#21830;&#21697;&#21697;&#31867;" visible="true" foreignKey="item_sku_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="&#38144;&#21306;" name="&#38144;&#21306;" visible="true" foreignKey="dim_province_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="&#21830;&#21697;&#31867;&#22411;" name="&#21830;&#21697;&#31867;&#22411;" visible="true" foreignKey="data_type" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="&#24211;&#25151;" name="&#24211;&#25151;" visible="true" foreignKey="int_org_num" highCardinality="false">
+    </DimensionUsage>
+    <Measure name="&#24211;&#23384;&#25968;&#37327;" column="stock_qtty" datatype="Numeric" formatString="#,###" aggregator="sum" description="&#24211;&#23384;&#25968;&#37327;" visible="true">
+    </Measure>
+    <Measure name="&#20837;&#24211;&#25968;&#37327;" column="into_wh_qtty" datatype="Numeric" formatString="#,###" aggregator="sum" description="&#20837;&#24211;&#25968;&#37327;" visible="true">
+    </Measure>
+    <Measure name="&#20986;&#24211;&#25968;&#37327;" column="out_wh_qtty" datatype="Numeric" formatString="#,###" aggregator="sum" description="&#20986;&#24211;&#25968;&#37327;" visible="true">
+    </Measure>
+    <Measure name="&#38144;&#21806;&#25968;&#37327;" column="sale_qtty" datatype="Numeric" formatString="#,###" aggregator="sum" description="&#38144;&#21806;&#25968;&#37327;" visible="true">
+    </Measure>
+    <CalculatedMember name="&#19978;&#26399;&#24211;&#23384;" formatString="" description="&#19978;&#26399;&#24211;&#23384;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#24211;&#23384;&#21464;&#21270;" formatString="" description="&#24211;&#23384;&#21464;&#21270;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;] - [Measures].[&#19978;&#26399;&#24211;&#23384;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#23384;&#38144;&#27604;" formatString="" description="&#23384;&#38144;&#27604;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#21160;&#38144;&#29575;" description="&#21160;&#38144;&#29575;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#29616;&#36135;&#29575;" description="&#29616;&#36135;&#29575;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#29616;&#36135;&#29575;&#21516;&#27604;" formatString="" description="&#29616;&#36135;&#29575;&#21516;&#27604;" formula="[Measures].[&#24211;&#23384;&#25968;&#37327;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+  </Cube>
+</Schema>

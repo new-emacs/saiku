@@ -1,0 +1,56 @@
+<?xml version='1.0'?>
+<Schema name="Optiq">
+  <Cube name="userInfo" caption="userinfo" visible="true" cache="true" enabled="true">
+    <Table name="factUserInfo">
+    </Table>
+    <Dimension visible="true" foreignKey="gender" highCardinality="false" name="Gender" caption="Gender">
+      <Hierarchy visible="true" hasAll="true" allMemberName="All Genders" primaryKey="value">
+        <Table name="dimGender">
+        </Table>
+        <Level name="Gender" visible="true" column="name" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="Count Person" column="userId" datatype="Integer" formatString="#,###" aggregator="count">
+    </Measure>
+  </Cube>
+</Schema>
+
+
+<!-- <Schema name='FoodMart' metamodelVersion='4.0'> -->
+<!--   <PhysicalSchema> -->
+<!--     <Table name='dimgender' > -->
+<!--       <Key> -->
+<!--         <Column name='time_id'/> -->
+<!--       </Key> -->
+<!--     </Table> -->
+<!--     <Table name='factuserinfo' /> -->
+<!--   </PhysicalSchema> -->
+<!--   <Cube name='Sales'> -->
+<!--     <Dimensions> -->
+<!--       <Dimension name='gender' table='dimgender' key='value'> -->
+<!--         <Attribute name='value' keyColumn='value' /> -->
+<!--         <Attribute name='name' keyColumn='name' /> -->
+<!--       </Dimension> -->
+<!--     </Dimensions> -->
+
+<!--     <MeasureGroups> -->
+<!--       <MeasureGroup table='factuserinfo'> -->
+
+<!--         <Measures> -->
+
+<!--           <Measure name='gender' column='gender'/> -->
+          
+<!--         </Measures> -->
+<!--         <DimensionLinks> -->
+
+<!--           <ForeignKeyLink dimension='' -->
+
+<!-- foreignKeyColumn='customer_id'/> -->
+<!--           <ForeignKeyLink dimension='Time' -->
+<!--                           foreignKeyColumn='time_id'/> -->
+<!--         </DimensionLinks> -->
+<!--       </MeasureGroup> -->
+<!--     </MeasureGroups> -->
+<!--   </Cube> -->
+<!-- </Schema> -->

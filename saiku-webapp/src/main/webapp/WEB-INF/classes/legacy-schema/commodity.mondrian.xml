@@ -1,0 +1,76 @@
+<Schema name="&#20140;&#19996;&#32599;&#30424;&#21830;&#21697;&#20998;&#26512;&#27169;&#22359;" description="&#21830;&#21697;&#20998;&#26512;">
+  <Cube name="Referer" caption="&#21830;&#21697;&#26469;&#28304;&#20998;&#26512;" visible="true" description="&#21830;&#21697;&#26469;&#28304;&#20998;&#26512;" cache="true" enabled="true">
+    <Table name="fact_commodity_referer">
+    </Table>
+    <Dimension type="StandardDimension" visible="true" foreignKey="referer_third_cate" highCardinality="false" name="Referer" caption="&#21830;&#21697;&#26469;&#28304;">
+      <Hierarchy visible="true" hasAll="true" allMemberName="AllDepatment" allMemberCaption="&#25152;&#26377;&#37096;&#38376;" primaryKey="referer_third_cate">
+        <Table name="fact_commodity_referer">
+        </Table>
+        <Level name="&#19968;&#32423;&#26469;&#28304;&#20998;&#31867;" visible="true" column="referer_first_cate" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="&#19968;&#32423;&#26469;&#28304;&#20998;&#31867;">
+        </Level>
+        <Level name="&#20108;&#32423;&#26469;&#28304;&#20998;&#31867;" visible="true" column="referer_second_cate" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="&#20108;&#32423;&#26469;&#28304;&#20998;&#31867;">
+        </Level>
+        <Level name="&#19977;&#32423;&#26469;&#28304;&#20998;&#31867;" visible="true" column="referer_third_cate" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="&#19977;&#32423;&#26469;&#28304;&#20998;&#31867;">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="TimeDimension" visible="true" foreignKey="date" highCardinality="false" name="Time" caption="&#26102;&#38388;">
+      <Hierarchy name="&#25353;&#23395;&#24230;&#32479;&#35745;" visible="true" hasAll="true" allMemberName="&#25152;&#26377;&#26102;&#38388;" primaryKey="dim_date">
+        <Table name="dim_time_v2">
+        </Table>
+        <Level name="&#24180;" visible="true" column="dim_year" type="Numeric" uniqueMembers="true" levelType="TimeYears" hideMemberIf="Never">
+        </Level>
+        <Level name="&#23395;&#24230;" visible="true" column="quarter" type="Numeric" uniqueMembers="false" levelType="TimeQuarters" hideMemberIf="Never">
+        </Level>
+        <Level name="&#26376;" visible="true" column="dim_month" type="Numeric" uniqueMembers="false" levelType="TimeMonths" hideMemberIf="Never">
+        </Level>
+        <Level name="&#26085;" visible="true" column="dim_day" type="Numeric" uniqueMembers="false" levelType="TimeDays" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Dimension type="StandardDimension" visible="true" foreignKey="SKU_ID" highCardinality="false" name="Categories" caption="&#20998;&#31867;&#21697;&#29260;SKU">
+      <Hierarchy visible="true" hasAll="true" allMemberName="&#25152;&#26377;&#20998;&#31867;" primaryKey="item_sku_id">
+        <Table name="dim_categories_brand_sku">
+        </Table>
+        <Level name="&#19968;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="code_level_1" nameColumn="name_level_1" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="&#19968;&#32423;&#20998;&#31867;&#21517;&#31216;">
+        </Level>
+        <Level name="&#20108;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="code_level_2" nameColumn="name_level_2" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="&#20108;&#32423;&#20998;&#31867;&#21517;&#31216;">
+        </Level>
+        <Level name="&#19977;&#32423;&#20998;&#31867;&#21517;&#31216;" visible="true" column="code_level_3" nameColumn="name_level_3" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="&#19977;&#32423;&#20998;&#31867;&#21517;&#31216;">
+        </Level>
+        <Level name="&#21697;&#29260;&#21517;&#31216;" visible="true" column="brand_code" nameColumn="barndname_full" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="SKUID" visible="true" column="item_sku_id" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        </Level>
+        <Level name="SKU&#21517;&#31216;" visible="true" column="item_sku_name" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="PV" column="PV" datatype="Numeric" formatString="####" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#35775;&#38382;&#27425;&#25968;" column="visits" datatype="Numeric" formatString="####" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#24179;&#22343;&#20572;&#30041;&#26102;&#38388;" column="average_page_rt" datatype="Numeric" formatString="####" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#19979;&#21333;&#25968;" column="order_qtty" datatype="Numeric" formatString="####" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="&#36339;&#20986;&#27425;&#25968;" column="bounces" datatype="Numeric" formatString="####" aggregator="sum" visible="true">
+    </Measure>
+    <CalculatedMember name="&#19979;&#21333;&#36716;&#25442;&#29575;" formatString="0.00%" formula="[Measures].[&#19979;&#21333;&#25968;]/[Measures].[&#35775;&#38382;&#27425;&#25968;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="&#36339;&#20986;&#29575;" formatString="0.00%" formula="[Measures].[&#36339;&#20986;&#27425;&#25968;]/[Measures].[&#35775;&#38382;&#27425;&#25968;]" dimension="Measures" visible="true">
+    </CalculatedMember>
+  </Cube>
+  <Role name="ROLE_ADMIN">
+    <SchemaGrant access="all">
+      <CubeGrant cube="Referer" access="all">
+      </CubeGrant>
+    </SchemaGrant>
+  </Role>
+  <Role name="ROLE_USER">
+    <SchemaGrant access="all">
+      <CubeGrant cube="Referer" access="all">
+      </CubeGrant>
+    </SchemaGrant>
+  </Role>
+</Schema>
