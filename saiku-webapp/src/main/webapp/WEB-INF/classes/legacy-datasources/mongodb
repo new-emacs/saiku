@@ -1,0 +1,4 @@
+type=OLAP
+name=optiqmongo
+driver=mondrian.olap4j.MondrianOlap4jDriver
+location=jdbc:mondrian:Jdbc=jdbc:optiq:model=res:mongo-zips-model.json;Catalog=res:legacy-schema/mongo.xml;JdbcDrivers=net.hydromatic.optiq.jdbc.Driver;

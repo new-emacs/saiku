@@ -1,0 +1,16 @@
+<Schema name="mongo">
+  <Cube name="zips" caption="zips" visible="true" cache="true" enabled="true">
+    <Table name="zips">
+    </Table>
+    <Dimension visible="true" foreignKey="city" highCardinality="false" name="city" caption="city">
+      <Hierarchy visible="true" hasAll="true" allMemberName="All City" primaryKey="value">
+        <Table name="zips">
+        </Table>
+        <Level name="city" visible="true" column="city" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+    <Measure name="Count pop" column="pop" datatype="Integer" formatString="#,###" aggregator="sum">
+    </Measure>
+  </Cube>
+</Schema>
