@@ -2,11 +2,11 @@
   <Cube name="zips" caption="zips" visible="true" cache="true" enabled="true">
     <Table name="zips">
     </Table>
-    <Dimension visible="true" foreignKey="city" highCardinality="false" name="city" caption="city">
+    <Dimension visible="true" foreignKey="CITY" highCardinality="false" name="CITY" caption="CITY">
       <Hierarchy visible="true" hasAll="true" allMemberName="All City" primaryKey="value">
         <Table name="zips">
         </Table>
-        <Level name="city" visible="true" column="city" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        <Level name="city" visible="true" column="CITY" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
         </Level>
       </Hierarchy>
     </Dimension>
