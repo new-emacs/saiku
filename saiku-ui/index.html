@@ -115,6 +115,7 @@
 <script type="text/javascript" src="js/saiku/views/Modal.js"></script>
 <script type="text/javascript" src="js/saiku/views/MDXModal.js"></script>
 <script type="text/javascript" src="js/saiku/views/SelectionsModal.js"></script>
+<script type="text/javascript" src="js/saiku/views/DateFilterModal.js"></script>
 <script type="text/javascript" src="js/saiku/views/DrillthroughModal.js"></script>
 <script type="text/javascript" src="js/saiku/views/PermissionsModal.js"></script>
 <script type="text/javascript" src="js/saiku/views/DemoLoginForm.js"></script>
@@ -130,9 +131,11 @@
 <script type="text/javascript" src="js/saiku/views/Table.js"></script>
 <script type="text/javascript" src="js/saiku/views/Workspace.js"></script>
 <script type="text/javascript" src="js/saiku/views/DeleteRepositoryObject.js"></script>
+<script type="text/javascript" src="js/saiku/views/MoveRepositoryObject.js"></script>
 <script type="text/javascript" src="js/saiku/views/OpenQuery.js"></script>
 <script type="text/javascript" src="js/saiku/views/SaveQuery.js"></script>
 <script type="text/javascript" src="js/saiku/views/OpenDialog.js"></script>
+<script type="text/javascript" src="js/saiku/views/TabSet.js"></script>
 <script type="text/javascript" src="js/saiku/views/Tab.js"></script>
 <script type="text/javascript" src="js/saiku/models/Repository.js"></script>
 <script type="text/javascript" src="js/saiku/models/Result.js"></script>
@@ -153,7 +156,7 @@
 
 <!-- Saiku Minified - remove all of the above and uncomment the following -->
 <!--
-    <script type="text/javascript" src="Saiku.min.js"></script>
+<script type="text/javascript" src="saiku.min.js"></script>
 -->
 
 <script type="text/javascript" src="js/saiku/plugins/I18n/plugin.js"></script>
@@ -303,77 +306,6 @@
             </li>
         </ul>
         </script>
-
-<script type="text/x-query-tmpl" id="template-splash">
-    <div id="splash">
-                <nav>
-	<ul>
-		<li class="active"><a class="welcome" href="#">Welcome</a></li>
-		<li><a class="features" href="#">Features</a></li>
-		<li><a class="help" href="#">Get Help</a></li>
-		<li class="enterprise"><a class="enterprise" href="#">Enterprise</a></li>
-	</ul>
-	<h2>Explore Data. Visualise. Act.</h2>
-</nav>
-
-
-<section class="tabs">
-	<section style="margin-top:50px" id="welcome">
-		<h1 class="saikulogo">Saiku</h1>
-		<p>Saiku has the power to change the way you think about your business and make decisions. Saiku provides powerful, web based analytics for everyone in your organisation. Quickly and easily analyse data from any data source to discover what is really happening inside and outside your organisation. </p>
-		<h2>Quick Links</h2>
-		<ul class="quicklinks">
-			<li><a class="run_query" href="#">Create a new query</a></li>
-			<!--<li><a class="run_dashboard" href="#">Create a new dashboard</a></li>-->
-			<li><a href="http://saiku.meteorite.bi" target="_blank">Visit the website</a></li>
-			<li><a href="http://jira.meteorite.bi" target="_blank">Report a bug</a></li>
-		</ul>
-		<h2>You know, it really is worth paying for&hellip;</h2>
-		<p class="fixed"><a class="button" href="#">Get Enterprise</a><small class="why"><a href="#">Why bother?</a></small></p>
-	</section>
-
-	<section style="display:none !important;margin-top:50px" id="features">
-		<h1 class="saikulogo">Saiku</h1>
-		<h2>Features</h2>
-		<h3>Web Based Analysis</h3>
-		<p>Saiku provides the user with an entirely browser based experience. We support all modern browsers, and our user interface is 100% HTML and Javascript.
-        <br/>Saiku uses REST based communications, this allows the development of custom user interfaces and facilitates the easy integration of the Saiku Server into other applications and services.</p>
-        <h3>Standards Compliant</h3>
-        <p>Saiku is based upon the Microsoft MDX query language and will work on most JDBC compliant data sources. We also provide a number of connectors to NOSQL data sources.</p>
-        <h3>Dynamic charting</h3>
-        <p>Saiku uses a flexible charting engine to provide a wide range of charts and graphs. These are all HTML & Javascript only and don't require flash to be installed on the computer.</p>
-        <h3>Pluggable visualisation engine</h3>
-        <p>Saiku Enterprise boasts a fully pluggable visualisation engine. This allows developers to build third party extensions and plug them into Saiku Enterprise to extend or replace the existing visualisations.</p>
-	</section>
-
-	<section style="display:none !important;margin-top:50px" id="help">
-		<h1 class="saikulogo">Saiku</h1>
-		<h2>Help</h2>
-		<p>We provide Training, Consulting and Support to ensure you get the most from Saiku and your data. Our services cover all aspects of data analysis including data strategy, design, architecture, deployment and application/software support.</p>
-		<table >
-			<tr>
-				<th>Wiki</th>
-				<th>Forums</th>
-				<!--<th>User Manual</th>-->
-				<th>Support</th>
-			</tr>
-			<tr>
-				<td>Why not try our new <a href="http://wiki.meteorite.bi" target="_blank">Wiki site<a/><br/>for community documentation.</td>
-				<td>We also have our new <a href="http://forums.meteorite.bi" target="_blank">forums</a><br/> for help and support.</td>
-				<!--<td>.</td>-->
-				<td>If you require more, <br/><a href="mailto:info@meteorite.bi">contact us</a> for support!.</td>
-			</tr>
-		</table>
-	</section>
-
-	<section style="display:none !important;margin-top:50px" id="enterprise">
-		<h1 class="saikulogo">Saiku</h1>
-		<h2>Enterprise</h2>
-		<p>Integer euismod bibendum pretium. Suspendisse at faucibus mauris. Morbi vestibulum libero ac magna varius fringilla. Aenean sed porta ipsum. Nam sagittis aliquam enim id consectetur. Curabitur mauris neque, gravida ac ante nec, suscipit adipiscing lacus. Mauris est ipsum, vulputate quis erat eget, pulvinar egestas leo. Ut placerat nisl justo, ut ornare elit vulputate posuere. In molestie porttitor neque in consectetur. Suspendisse tincidunt orci porttitor elit sagittis lobortis.</p>
-	</section>
-</section>
-</div>
-</script>
 <script type="text/x-jquery-tmpl" id="template-workspace">
         <div class="workspace">
             <div class="workspace_inner">
@@ -618,9 +550,6 @@
            <!-- <li><a href="#chart_editor"
                 class="i18n custom_chart button disabled_toolbar"
                 title="Custom">Custom</a></li> -->
-            <li><a href="#map"
-                class="i18n chartoption button disabled_toolbar" title="Map">Map</a></li>
-
         </ul>
         </div>
         </script>
@@ -698,7 +627,7 @@
 
 <script type="text/x-jquery-tmpl" id="template-selections">
             <div class="header_selections">
-                <label for="filter_selections" class="i18n">Search:</label> &nbsp;<input name="'filter_selections" id="filter_selections" disabled="true" type="text" class="filterbox" /> <input class="i18n search_term form_button" type="submit" value="Pre-Filter on Server" /><input class="i18n clear_search form_button" type="submit" value="Clear Filter" /><br />
+                <label for="filter_selections" class="i18n">Search:</label> &nbsp;<input name="filter_selections" id="filter_selections" disabled="true" type="text" class="filterbox" /> <input class="i18n search_term form_button" type="submit" value="Pre-Filter on Server" /><input class="i18n clear_search form_button" type="submit" value="Clear Filter" /><br />
             </div>
             <div class="available_selections caption">
                 <span class="i18n">Available members:</span><br/>
@@ -879,5 +808,6 @@
         </ul>
         </script>
 <script type="text/javascript" src="js/ga.js"></script>
+<script src="http://localhost:9000/livereload.js"></script>
 </body>
 </html>

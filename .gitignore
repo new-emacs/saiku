@@ -12,5 +12,5 @@ saiku-core/saiku-service/locks
 saiku-core/saiku-service/output/
 saiku-core/saiku-service/repo-conf
 saiku-core/saiku-service/repository.xml
-sone-web/target/
 saiku-ui/target/
+target

@@ -2,7 +2,7 @@
  * Base 64 module
  */
 ;(function (window) {
-
+  /*jshint -W030 */
   var
     characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
     fromCharCode = String.fromCharCode,
@@ -92,7 +92,7 @@ var SaikuCall = {
 
   }
 
-}
+};
 var SaikuRenderer = {
   "table" : SaikuTableRenderer,
   "chart" : SaikuChartRenderer
@@ -124,7 +124,7 @@ SaikuClient.prototype.execute = function(usercall) {
   var client = this.config;
   var parameters = {};
   if (call.params) {
-    for (key in call.params) {
+    for (var key in call.params) {
       parameters['param' + key] = call.params[key];
     }
   }
@@ -185,99 +185,4 @@ SaikuClient.prototype.execute = function(usercall) {
       };
     
     $.ajax(params);
-};
-
-SaikuClient.prototype.executeMdx = function(usercall) {
-    var self = this;
-    var call = _.extend({},
-                        SaikuCall,
-                        usercall
-                       );
-    if (typeof console != "undefined" && console) {
-        console.log(call);
-    }
-    var client = this.config;
-    var parameters = {};
-    if (call.params) {
-        for (key in call.params) {
-            parameters['param' + key] = call.params[key];
-        }
-    }
-    parameters = _.extend(
-        parameters,
-        { "connection" : call.connection },
-        { "catalog" : call.catalog },
-        { "schema" : call.schema },
-        { "cube" : call.cube },
-        { "formatter" : call.formatter },
-        { "type" : call.type },
-        { "limit" : call.limit },
-        { "mdx" : call.mdx }
-    );
-
-
-    if ($.blockUI && !Dashboards) {
-        $(call.htmlObject).block({
-            message: '<span class="saiku_logo" style="float:left">&nbsp;&nbsp;</span> Executing....'
-        });
-    }
-
-    var queryID = "/rest/saiku/embed/query/"+Math.floor(Math.random()*24000);
-    //创建一个query
-    $.ajax({
-        url: queryID,
-        type: "POST",
-        data:  parameters,
-
-        success: function(data) {
-
-            $.ajax({
-                url: queryID+"/result/flat",
-                type: "POST",
-                data: parameters,
-                contentType:  'application/x-www-form-urlencoded',
-                dataType:     "json",
-                success:      function(data, textStatus, jqXHR) {
-
-                    if (call.render in SaikuRenderer) {
-                        var r = new SaikuRenderer[call.render](data, call);
-                        r.render();
-                        if ($.blockUI) {
-                            $(call.htmlObject).unblock();
-                        }
-                    } else {
-                        alert('Render type ' + call.render + " not found!");
-                    }
-                    if ($.blockUI) {
-                        $(call.htmlObject).unblock();
-                    }
-                },
-                error:        function(jqXHR, textStatus, errorThrown) {
-                    if ($.blockUI) {
-                        $(call.htmlObject).unblock();
-                    }
-
-                    $(call.htmlObject).text("Error: " + textStatus);
-                    self.error(jqXHR, textStatus, errorThrown);
-                },
-                crossDomain: true,
-                async:        true,
-                beforeSend:   function(request) {
-                    if (client && client.user && client.password) {
-                        var auth = "Basic " + Base64.encode(
-                            client.user + ":" + client.password
-                        );
-                        request.setRequestHeader('Authorization', auth);
-                        return true;
-                    }
-                }
-
-            });
-
-
-        }
-
-    });
-
-
 };

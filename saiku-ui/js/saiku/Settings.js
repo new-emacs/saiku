@@ -18,7 +18,7 @@
  * Change settings here
  */
 var Settings = {
-    VERSION: "Saiku 3.0-SNAPSHOT",
+    VERSION: "Saiku 3.0-GA", 
     BIPLUGIN: false,
     BIPLUGIN5: false,
     BASE_URL: window.location.origin,
@@ -63,7 +63,8 @@ var Settings = {
     DEMO: false,
     TELEMETRY_SERVER: 'http://telemetry.analytical-labs.com:7000',
     LOCALSTORAGE_EXPIRATION: 10 * 60 * 60 * 1000 /* 10 hours, in ms */,
-    UPGRADE: true    
+    UPGRADE: true,
+    EVALUATION_PANEL_LOGIN: true
 };
 
 /**
@@ -76,13 +77,14 @@ Settings.GET = function () {
         tokens,
         re = /[?&]?([^=]+)=([^&]*)/g;
 
-    while (tokens = re.exec(qs)) {
+    tokens = re.exec(qs);
+    while (tokens) {
         var value = decodeURIComponent(tokens[2]);
         if (! isNaN(value)) value = parseInt(value);
         if (value === "true") value = true;
         if (value === "false") value = false;
-        params[decodeURIComponent(tokens[1]).toUpperCase()]
-            = value;
+        params[decodeURIComponent(tokens[1]).toUpperCase()] = value;
+        tokens = re.exec(qs);
     }
 
     return params;
@@ -99,8 +101,7 @@ Settings.PARAMS = (function() {
     return p;
 }());
 
-Settings.REST_URL = Settings.TOMCAT_WEBAPP 
-    + Settings.REST_MOUNT_POINT;
+Settings.REST_URL = Settings.TOMCAT_WEBAPP + Settings.REST_MOUNT_POINT;
 
 // lets assume we dont need a min width/height for table mode
 if (Settings.MODE == "table") {
@@ -132,9 +133,7 @@ if (!Array.prototype.indexOf)
     var len = this.length >>> 0;
 
     var from = Number(arguments[1]) || 0;
-    from = (from < 0)
-         ? Math.ceil(from)
-         : Math.floor(from);
+    from = (from < 0) ? Math.ceil(from) : Math.floor(from);
     if (from < 0)
       from += len;
 
@@ -191,3 +190,15 @@ var isIE = (function(){
     return false;
 
 }());
+
+var isFF = (function(userAgent) {
+    'use strict';
+
+    return !!userAgent.match(/Firefox/);
+}(navigator.userAgent));
+
+var isMobile = (function(userAgent) {
+  'use strict';
+
+  return !!userAgent.match(/android|webos|ip(hone|ad|od)|opera (mini|mobi|tablet)|iemobile|windows.+(phone|touch)|mobile|fennec|kindle (Fire)|Silk|maemo|blackberry|playbook|bb10\; (touch|kbd)|Symbian(OS)|Ubuntu Touch/i);
+}(navigator.userAgent));

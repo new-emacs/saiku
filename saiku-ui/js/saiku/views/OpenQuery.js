@@ -54,6 +54,7 @@ var OpenQuery = Backbone.View.extend({
         return "Repository";
     },
     
+    /*jshint -W069 */
     render: function() {
         // Load template
         $(this.el).html(this.template());
@@ -69,6 +70,7 @@ var OpenQuery = Backbone.View.extend({
                     "edit": {name: "Edit", i18n: true },
 //                    "rename": {name: "Rename", i18n: true },
                     "delete": {name: "Delete", i18n: true },
+                    "move": {name: "Move", i18n: true},
                     "sep1": "---------",
                     "new": {name: "New Folder", i18n: true}
         };
@@ -91,11 +93,16 @@ var OpenQuery = Backbone.View.extend({
                             opt.items['delete'].disabled = true;
                             opt.commands['edit'].disabled = true;
                             opt.items['edit'].disabled = true;
+                            opt.commands['move'].disabled = true;
+                            opt.items['move'].disabled = true;
+
                         } else {
                             opt.commands['delete'].disabled = false;
                             opt.items['delete'].disabled = false;
                             opt.commands['edit'].disabled = false;
                             opt.items['edit'].disabled = false;
+                            opt.commands['move'].disabled = false;
+                            opt.items['move'].disabled = false;
                         }
 
                         if ($(this).hasClass('folder_row')) {
@@ -120,6 +127,8 @@ var OpenQuery = Backbone.View.extend({
                         self.add_folder();
                     } else if (key == "delete") {
                         self.delete_repoObject();
+                    } else if(key == "move"){
+                        self.move_repoObject();
                     }
 
 
@@ -160,7 +169,7 @@ var OpenQuery = Backbone.View.extend({
 
     search_file: function(event) {
         var filter = $(this.el).find('.search_file').val().toLowerCase();
-        var isEmpty = (typeof filter == "undefined" || filter == "" || filter == null);
+        var isEmpty = (typeof filter == "undefined" || filter === "" || filter === null);
         if (isEmpty || event.which == 27 || event.which == 9) {
             this.cancel_search();
         } else {
@@ -169,7 +178,7 @@ var OpenQuery = Backbone.View.extend({
             } else {
                 $(this.el).find('.cancel_search').hide();
             }
-            $(this.el).find('li.query').removeClass('hide')
+            $(this.el).find('li.query').removeClass('hide');
             $(this.el).find('li.query a').each(function (index) { 
                 if($(this).text().toLowerCase().indexOf(filter) == -1) {
                     $(this).parent('li.query').addClass('hide');
@@ -372,7 +381,16 @@ var OpenQuery = Backbone.View.extend({
         
         return false;
     },
-    
+
+    move_repoObject: function(event) {
+        (new MoveRepositoryObject({
+            query: this.selected_query,
+            success: this.clear_query
+        })).render().open();
+
+        return false;
+    },
+
     edit_folder: function( event ) {
         alert( 'todo: edit folder properties/permissions' );
         return false;

@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * @fileOverview Saiku User Inteface (UI) Default Styles
  * @author Prashant Raju and Mark Cahill
@@ -33,9 +33,23 @@ html, body {
     font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
     font-size: 11px;
     line-height: 1.5;
-    margin:0; 
-    padding:0; 
-    border:0; 
+    margin:0;
+    padding:0;
+    border:0;
+}
+
+.clearfix:before,
+.clearfix:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both;
+}
+
+.clearfix {
+    *zoom: 1;
 }
 
 input[type=text], input[type=password],
@@ -49,6 +63,11 @@ input.text:focus, input.title:focus,
 textarea:focus {
   border-color:#666;
   outline: 1;
+}
+input[disabled],
+select[disabled] {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
 }
 select { background-color:#fff; border-width:1px; border-style:solid; }
 
@@ -80,6 +99,12 @@ textarea, select {
 }
 .sprite, .ui-dialog-titlebar-close,.ui-dialog-titlebar-close button, .ui-dialog-titlebar-close:hover, .dialog_icon {
     background: url(../../../images/sprite.png) no-repeat;
+}
+
+.truncate {
+  	white-space: nowrap;
+  	overflow: hidden;
+  	text-overflow: ellipsis;
 }
 
 .accordion-toggle {cursor: pointer;}
@@ -149,7 +174,6 @@ textarea, select {
 #toolbar {
     background: #EEEEEE;
     background: -webkit-gradient(linear, left top, left bottom, from(#EEEEEE), to(#DDDDDD));
-    background: -moz-linear-gradient(top, #EEEEEE 0%, #DDDDDD 100%);
     border-bottom: 1px solid #BBB;
     height: 50px;
 }
@@ -292,7 +316,6 @@ textarea, select {
     border-top: 1px solid #CCC;
     border-right: 1px solid #CCC;
     background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#F0F0F0));
-    background: -moz-linear-gradient(top, #FFFFFF 0%, #F0F0F0 100%);
     border-bottom: 1px solid #F0F0F0 !important;
     font-weight: bold;
 }
@@ -379,7 +402,7 @@ textarea, select {
 
 .sidebar_separator {
     background: #F0F0F0;
-    
+
     border-left: 1px solid #CCC;
     cursor: pointer;
     float: left;
@@ -464,9 +487,9 @@ textarea, select {
 }
 .dimension_tree ul li ul li a.level {
     color: #2A6085;
-    /* 
+    /*
     padding-left: 20px;
-    background: url('../../../images/src/bullet_blue.png') 0px 4px no-repeat; 
+    background: url('../../../images/src/bullet_blue.png') 0px 4px no-repeat;
     */
 }
 .measure_tree ul li ul li a {
@@ -551,7 +574,6 @@ textarea, select {
     padding: 5px 5px !important;
     background: #F0F0F0 !important;
     background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#F0F0F0)) !important;
-    background: -moz-linear-gradient(center top , #FFFFFF 0%, #F0F0F0 100%) repeat scroll 0 0 rgba(0, 0, 0, 0) !important;
 }
 
 .ui-dialog.ui-draggable-dragging .ui-dialog-titlebar-close {
@@ -564,7 +586,7 @@ textarea, select {
   z-index:100;
   border:2px solid #86fe00;
   background-color: rgba(203, 239, 163, 0.6);
-} 
+}
 
 
 
@@ -606,8 +628,6 @@ textarea, select {
     border: 3px solid #EEE;
     min-width: 400px !important;
     min-height: auto !important;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
     border-radius: 3px;
     border: 1px solid #CCC;
     z-index: 100;
@@ -621,6 +641,20 @@ textarea, select {
     padding: 4px;
     width: 240px;
 }
+#login_form .eval-panel {
+    width: 250px;
+}
+#login_form #eval-login {
+    float: right;
+}
+#login_form .eval-panel-user ul {
+    padding: 0;
+    float: left;
+    list-style: none;
+}
+#login_form .eval-panel-user ul li:first-child {
+    font-weight: bold;
+}
 
 .context-menu-item {
     line-height: 16.5px;
@@ -633,7 +667,6 @@ textarea, select {
 .ui-dialog-titlebar {
     background: #F0F0F0;
     background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#F0F0F0));
-    background: -moz-linear-gradient(top, #FFFFFF 0%, #F0F0F0 100%);
     border-bottom: 1px solid #CCC;
     height: 18px;
     padding: 5px 5px 6px 10px !important;
@@ -642,7 +675,7 @@ textarea, select {
     -moz-box-shadow:0 1px 3px #DDDDDD;
     -webkit-box-shadow:0 1px 3px #DDDDDD;
     font-family: inherit !important;
-}    
+}
 .ui-dialog-titlebar .ui-dialog-title {
     float: left;
     font-size: 12px;
@@ -722,10 +755,12 @@ textarea, select {
 	min-width: 800px !important;
     height: 490px !important;
 }
-.dialog_selections .dialog_icon {
+.dialog_selections .dialog_icon,
+.dialog_date-filter .dialog_icon {
 	display: none;
 }
-.dialog_selections .dialog_body {
+.dialog_selections .dialog_body,
+.dialog_date-filter .dialog_body {
     height: 410px;
     position: relative;
 }
@@ -842,6 +877,92 @@ textarea, select {
 }
 .dialog_selections .available_selections input[type="text"] {
     width: 300px;
+}
+
+.dialog_date-filter {
+    min-width: 500px !important;
+    height: 490px !important;
+}
+
+.dialog_date-filter .dialog_body .box-selections {
+    position: relative;
+    margin: 20px auto;
+    width: 100%;
+    /*border: 1px solid #000;*/
+}
+
+.dialog_date-filter .dialog_body .available-selections {
+    margin: 0 auto;
+    width: 80%;
+    /*border: 1px solid #000;*/
+}
+
+.dialog_date-filter .dialog_body .selection-option {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    transform: translateY(-50%);
+}
+
+.dialog_date-filter .dialog_body .selection-options {
+    padding: 10px;
+    width: 430px;
+    height: auto;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    overflow: auto;
+}
+
+.dialog_date-filter .dialog_body .form-group-selection {
+    display: inline-block;
+    width: 100px;
+}
+
+.dialog_date-filter .dialog_body .form-group {
+    margin-top: 5px;
+    padding-right: 10px;
+    float: left;
+    /*border: 1px solid #000;*/
+}
+
+.dialog_date-filter .dialog_body .inline-form-group {
+    display: inline-block;
+}
+
+.dialog_date-filter .dialog_body .form-group label,
+.dialog_date-filter .dialog_body .form-group select {
+    padding-right: 10px;
+}
+
+.dialog_date-filter .dialog_body .form-group #selection-date {
+    width: 100px;
+}
+
+.dialog_date-filter .dialog_body .form-group #add-date {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.dialog_date-filter .dialog_body #div-selected-date fieldset {
+    width: 150px;
+    border: 1px solid #ccc;
+}
+
+.dialog_date-filter .dialog_body .form-group #selected-date {
+    padding: 0;
+    max-height: 50px;
+    list-style: none;
+    overflow: auto;   
+}
+
+.dialog_date-filter .dialog_body .form-group #selected-date a {
+    margin-left: 5px;
+    color: blue;
+    text-decoration: none;
+}
+
+.dialog_date-filter .dialog_body .form-group #selected-date a:hover {
+    text-decoration: underline;   
 }
 
 .dialog_permissions .dialog_body {
@@ -1049,6 +1170,12 @@ textarea, select {
     box-shadow: 2px 1px 3px rgba(0, 0, 0, 0.1)
     -moz-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.10);
     -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.10);
+}
+.workspace_toolbar h3.top {
+    border-top: none !important;
+    margin: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 a.disabled_toolbar {
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=30)";
@@ -1413,7 +1540,6 @@ a.disabled_toolbar:hover {
 .form_button {
     background: #F0F0F0;
     background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#F0F0F0));
-    background: -moz-linear-gradient(top, #FFFFFF 0%, #F0F0F0 100%);
     border: 1px solid #CCCCCC;
     box-shadow: none;
     color: #222222 !important;
@@ -1554,7 +1680,7 @@ a.disabled_toolbar:hover {
         background: url('../../../images/src/arrow_refresh.png') no-repeat;
         width: 16px;
         background-position: 50% 50%;
-        
+
 }
 .filter_items a.button:hover {
     border: 1px solid #CCC;
@@ -1652,7 +1778,9 @@ span.cancel_search:hover {
     background: url('../../../images/src/arrow_up_bnw.png') no-repeat;
     width: 16px;
     height: 16px;
-    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+        -ms-transform: rotate(-90deg);
+            transform: rotate(-90deg);
 }
 
 .RepositoryObjects {
@@ -1910,7 +2038,8 @@ span.cancel_search:hover {
 .gridster {
     margin: 0 auto;
     opacity: 0.8;
-    transition: opacity 0.6s ease 0s;
+    -webkit-transition: opacity 0.6s ease 0s;
+            transition: opacity 0.6s ease 0s;
 }
 .gridster .gs-w {
     background: none repeat scroll 0 0 #DDDDDD;
@@ -1948,81 +2077,6 @@ form {
     width: 300px;
 }*/
 
-/* Schema Designer */
-
-.connection_form {
-    max-width: 255px;
-    box-sizing: border-box;
-}
-
-.connection_form label {
-    display: inline-block;
-    width: 75px;
-    text-align: right;
-}
-
-.connection_form input[type="text"],
-.connection_form input[type="password"] {
-    width: 170px;
-    margin-left: 5px;
-}
-
-.connection_form button {
-    float: right;
-    cursor: pointer;
-}
-
-.database_list > li.database > a,
-.schema_list > li.schema > a {
-    color: #999;
-    text-decoration: none;
-}
-
-.database_list > li.database > a:hover,
-.schema_list > li.schema > a:hover {
-    text-decoration: underline;
-}
-
-.database_list > li.database.selected > a,
-.schema_list > li.schema.selected > a {
-    color: #000;
-    font-weight: bold;
-}
-
-.table_list {
-    margin: 0 auto;
-    width: auto;
-    display: inline-block;
-    white-space: nowrap;
-}
-
-.dbtable {
-    display: inline-block;
-    padding: 5px;
-    white-space: nowrap;
-}
-
-.table_wrapper {
-    white-space: nowrap;
-    vertical-align: top;
-    display: inline-block;
-    padding:5px;
-}
-
-.table_wrapper > table {
-    float: left;
-    width: 148px !important;
-    border: 1px solid #c8c8c8 !important;
-    table-layout: fixed;
-    border-radius: 5px;
-}
-
-.table_wrapper > table  th {
-    background-color: #98bfda;
-}
-
-/* begin delete this block */
-
 .conn_forms label {
     display: inline-block; width: 70px; text-align: right;
 }
@@ -2047,8 +2101,6 @@ form {
 .conn_forms input:focus {
     border: 2px solid #900;
 }
-
-/* end delete this block */
 
 .keyrow label{
 width:90px !important;
@@ -2141,7 +2193,6 @@ width:70px !important;
 }*/
 .tablewrapper{
     white-space: nowrap;
-    -moz-border-radius: 15px;
     border-radius: 15px;
     vertical-align: top;
     display: inline-block;
@@ -2164,8 +2215,50 @@ width:70px !important;
     border-radius: 7px;
 }
 
-.glowing-border:focus { 
+.glowing-border:focus {
     outline: none;
     border-color: #9ecaed;
     box-shadow: 0 0 10px #9ecaed;
+}
+
+.ui-datepicker {
+    padding: 10px;
+    display: none;
+    font-size: 11px;
+    background: #fcfcfc;
+    background: #fff -moz-linear-gradient(top, #fcfcfc 0%, #fff 100%);
+    background: #fff -webkit-gradient(linear, left top, left bottom, color-stop(0%,#fcfcfc)), color-stop(100%,#fff));
+    background: #fff -webkit-linear-gradient(top, #fcfcfc 0%, #fff 100%);
+    background: #fff -o-linear-gradient(top, #fcfcfc 0%, #fff 100%);
+    background: #fff -ms-linear-gradient(top, #fcfcfc 0%, #fff 100%);
+    background: #fff linear-gradient(top, #fcfcfc 0%, #fff 100%);
+    border: 1px solid #ccc;
+}
+
+.ui-datepicker table {
+    width: 100%;
+}
+
+.ui-datepicker table td {
+    text-align: center;
+}
+
+.ui-datepicker a {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ui-datepicker-title {
+    text-align: center;
+    font-weight: bold;
+}
+
+.ui-datepicker-prev {
+}
+
+.ui-datepicker-next {
+}
+
+#date-input {
+	width:50px;
 }
