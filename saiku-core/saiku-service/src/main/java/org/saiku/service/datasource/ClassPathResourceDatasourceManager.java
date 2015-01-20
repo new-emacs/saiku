@@ -28,8 +28,6 @@ import org.saiku.service.util.exception.SaikuServiceException;
 import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemManager;
 import org.apache.commons.vfs.VFS;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -310,17 +308,38 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
 
   }
 
-  public boolean hasHomeDirectory(String name) {
-
-    return false;
-  }
-
-  public void restoreLegacyFiles(byte[] data) {
-
-  }
-
-  @Nullable
-  public String saveFile(String path, String content, String user) {
+  public String getFoodmartschema() {
     return null;
   }
+
+  public void setFoodmartschema(String schema) {
+
+  }
+
+  public void setFoodmartdir(String dir) {
+
+  }
+
+  public String getFoodmartdir() {
+    return null;
+  }
+
+  public String getDatadir() {
+    return null;
+  }
+
+  public void setDatadir(String dir) {
+  }
+
+  public void setFoodmarturl(String foodmarturl) {
+
+  }
+
+  public String getFoodmarturl() {
+    return null;
+  }
+
+  public String saveFile(String path, String content, String user) {
+        return null;
+    }
 }

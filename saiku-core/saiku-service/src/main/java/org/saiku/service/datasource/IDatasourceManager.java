@@ -96,5 +96,21 @@ public interface IDatasourceManager {
 
   boolean hasHomeDirectory(String name);
 
-  void restoreLegacyFiles(byte[] data);
+    public void restoreLegacyFiles(byte[] data);
+
+  public String getFoodmartschema();
+
+  public void setFoodmartschema(String schema);
+
+  public void setFoodmartdir(String dir);
+
+  public String getFoodmartdir();
+
+  public String getDatadir();
+
+  public void setDatadir(String dir);
+
+  public void setFoodmarturl(String foodmarturl);
+
+  public String getFoodmarturl();
 }

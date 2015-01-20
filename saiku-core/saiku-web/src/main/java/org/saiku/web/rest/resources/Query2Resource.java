@@ -33,10 +33,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -54,11 +54,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-
-/**
- * Query2Resource.
- */
 @Component
 @Path("/saiku/api/query")
 @XmlAccessorType(XmlAccessType.NONE)
@@ -92,12 +87,67 @@ public class Query2Resource {
     if (LOG.isDebugEnabled()) {
       LOG.debug("TRACK\t" + "\t/query/" + queryName + "\tDELETE");
     }
-    try {
-      thinQueryService.deleteQuery(queryName);
-      return Status.GONE;
-    } catch (Exception e) {
-      LOG.error("Cannot delete query (" + queryName + ")", e);
-      throw new WebApplicationException(e);
+
+    /**
+     * Create a new Saiku Query.
+     *
+     * @return a query model.
+     *
+     * @see
+     */
+    @POST
+    @Produces({"application/json" })
+    @Path("/{queryname}")
+    public ThinQuery createQuery(
+            @PathParam("queryname") String queryName,
+            @FormParam("json") String jsonFormParam,
+            @FormParam("file") String fileFormParam,
+            MultivaluedMap<String, String> formParams) throws ServletException
+    {
+        try {
+            ThinQuery tq;
+            String file = fileFormParam,
+                    json = jsonFormParam;
+            if (formParams != null) {
+                json = formParams.containsKey("json") ? formParams.getFirst("json") : jsonFormParam;
+                file = formParams.containsKey("file") ? formParams.getFirst("file") : fileFormParam;
+            }
+            String filecontent = null;
+            if (StringUtils.isNotBlank(json)) {
+                filecontent = json;
+            } else if (StringUtils.isNotBlank(file)) {
+                Response f = repository.getResource(file);
+                filecontent = new String( (byte[]) f.getEntity());
+            }
+            if (StringUtils.isBlank(filecontent)) {
+                throw new SaikuServiceException("Cannot create new query. Empty file content " + StringUtils.isNotBlank(json) + " or read from file:" + file);
+            }
+            if (thinQueryService.isOldQuery(filecontent)) {
+                tq = thinQueryService.convertQuery(filecontent);
+            } else {
+                ObjectMapper om = new ObjectMapper();
+                tq = om.readValue(filecontent, ThinQuery.class);
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("TRACK\t"  + "\t/query/" + queryName + "\tPOST\t tq:" + (tq == null) + " file:" + (file));
+            }
+
+            if (tq == null) {
+                throw new SaikuServiceException("Cannot create blank query (ThinQuery object = null)");
+            }
+            tq.setName(queryName);
+
+            //			SaikuCube cube = tq.getCube();
+            //			if (StringUtils.isNotBlank(xml)) {
+            //				String query = ServletUtil.replaceParameters(formParams, xml);
+            //				return thinQueryService.createNewOlapQuery(queryName, query);
+            //			}
+            return thinQueryService.createQuery(tq);
+        } catch (Exception e) {
+            log.error("Error creating new query", e);
+            throw new WebApplicationException(e);
+        }
     }
   }
 
@@ -195,50 +245,44 @@ public class Query2Resource {
     }
   }
 
-  @DELETE
-  @Path("/{queryname}/cancel")
-  public Response cancel(@PathParam("queryname") String queryName) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "\tDELETE");
+    @POST
+    @Consumes({"application/json" })
+    @Path("/enrich")
+    public ThinQuery enrich(ThinQuery tq) {
+        try {
+            return thinQueryService.updateQuery(tq);
+        }
+        catch (Exception e) {
+            log.error("Cannot enrich query (" + tq + ")",e);
+            String error = ExceptionUtils.getRootCauseMessage(e);
+            throw new WebApplicationException(Response.serverError().entity(error).build());
+        }
     }
-    try {
-      thinQueryService.cancel(queryName);
-      return Response.ok(Status.GONE).build();
-    } catch (Exception e) {
-      LOG.error("Cannot cancel query (" + queryName + ")", e);
-      String error = ExceptionUtils.getRootCauseMessage(e);
-      throw new WebApplicationException(Response.serverError().entity(error).build());
-    }
-  }
 
-  @POST
-  @Consumes({ "application/json" })
-  @Path("/enrich")
-  public ThinQuery enrich(ThinQuery tq) {
-    try {
-      ThinQuery tqAfter = thinQueryService.updateQuery(tq);
-      return tqAfter;
-    } catch (Exception e) {
-      LOG.error("Cannot enrich query (" + tq + ")", e);
-      String error = ExceptionUtils.getRootCauseMessage(e);
-      throw new WebApplicationException(Response.serverError().entity(error).build());
-    }
-  }
-
-  @GET
-  @Produces({ "application/json" })
-  @Path("/{queryname}/result/metadata/hierarchies/{hierarchy}/levels/{level}")
-  public List<SimpleCubeElement> getLevelMembers(
-      @PathParam("queryname") String queryName,
-      @PathParam("hierarchy") String hierarchyName,
-      @PathParam("level") String levelName,
-      @QueryParam("result") @DefaultValue("true") boolean result,
-      @QueryParam("search") String searchString,
-      @QueryParam("searchlimit") @DefaultValue("-1") int searchLimit) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t"
-                + "\t/query/" + queryName + "/result/metadata"
-                + "/hierarchies/" + hierarchyName + "/levels/" + levelName + "\tGET");
+    @GET
+    @Produces({"application/json" })
+    @Path("/{queryname}/result/metadata/hierarchies/{hierarchy}/levels/{level}")
+    public List<SimpleCubeElement> getLevelMembers(
+            @PathParam("queryname") String queryName,
+            @PathParam("hierarchy") String hierarchyName,
+            @PathParam("level") String levelName,
+            @QueryParam("result") @DefaultValue("true") boolean result,
+            @QueryParam("search") String searchString,
+            @QueryParam("searchlimit") @DefaultValue("-1") int searchLimit)
+    {
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"
+                    + "\t/query/" + queryName + "/result/metadata"
+                    + "/hierarchies/" + hierarchyName + "/levels/" + levelName + "\tGET");
+        }
+        try {
+            return thinQueryService.getResultMetadataMembers(queryName, result, hierarchyName, levelName, searchString, searchLimit);
+        }
+        catch (Exception e) {
+            log.error("Cannot execute query (" + queryName + ")",e);
+            String error = ExceptionUtils.getRootCauseMessage(e);
+            throw new WebApplicationException(Response.serverError().entity(error).build());
+        }
     }
     try {
       List<SimpleCubeElement> ms = thinQueryService
@@ -252,57 +296,114 @@ public class Query2Resource {
   }
 
 
-  @GET
-  @Produces({ "application/vnd.ms-excel" })
-  @Path("/{queryname}/export/xls")
-  public Response getQueryExcelExport(@PathParam("queryname") String queryName) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "/export/xls/\tGET");
+    @GET
+    @Produces({"application/vnd.ms-excel" })
+    @Path("/{queryname}/export/xls")
+    public Response getQueryExcelExport(@PathParam("queryname") String queryName){
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"  + "\t/query/" + queryName + "/export/xls/\tGET");
+        }
+        return getQueryExcelExport(queryName, "flattened", null);
     }
-    return getQueryExcelExport(queryName, "flattened");
-  }
 
-  @GET
-  @Produces({ "application/vnd.ms-excel" })
-  @Path("/{queryname}/export/xls/{format}")
-  public Response getQueryExcelExport(
-      @PathParam("queryname") String queryName,
-      @PathParam("format") @DefaultValue("flattened") String format) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "/export/xls/" + format + "\tGET");
+    @GET
+    @Produces({"application/vnd.ms-excel" })
+    @Path("/{queryname}/export/xls/{format}")
+    public Response getQueryExcelExport(
+            @PathParam("queryname") String queryName,
+            @PathParam("format") @DefaultValue("flattened") String format, @QueryParam("exportname") @DefaultValue("")
+            String name){
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"  + "\t/query/" + queryName + "/export/xls/"+format+"\tGET");
+        }
+        try {
+            byte[] doc = thinQueryService.getExport(queryName,"xls",format);
+            if(name == null || name.equals("")) {
+                name = SaikuProperties.webExportExcelName + "." + SaikuProperties.webExportExcelFormat;
+            }
+            return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
+                    "content-disposition",
+                    "attachment; filename = " + name).header(
+                    "content-length",doc.length).build();
+        }
+        catch (Exception e) {
+            log.error("Cannot get excel for query (" + queryName + ")",e);
+            String error = ExceptionUtils.getRootCauseMessage(e);
+            throw new WebApplicationException(Response.serverError().entity(error).build());
+        }
     }
-    try {
-      byte[] doc = thinQueryService.getExport(queryName, "xls", format);
-      String name = SaikuProperties.WEBEXPORTEXCELNAME + "." + SaikuProperties.WEBEXPORTEXCELFORMAT;
-      return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
-          "content-disposition",
-          "attachment; filename = " + name).header(
-          "content-length", doc.length).build();
-    } catch (Exception e) {
-      LOG.error("Cannot get excel for query (" + queryName + ")", e);
-      String error = ExceptionUtils.getRootCauseMessage(e);
-      throw new WebApplicationException(Response.serverError().entity(error).build());
-    }
-  }
 
-  @GET
-  @Produces({ "text/csv" })
-  @Path("/{queryname}/export/csv")
-  public Response getQueryCsvExport(@PathParam("queryname") String queryName) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "/export/csv\tGET");
+    @GET
+    @Produces({"text/csv" })
+    @Path("/{queryname}/export/csv")
+    public Response getQueryCsvExport(@PathParam("queryname") String queryName) {
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"  + "\t/query/" + queryName + "/export/csv\tGET");
+        }
+        return getQueryCsvExport(queryName, "flattened", null);
     }
-    return getQueryCsvExport(queryName, "flattened");
-  }
 
-  @GET
-  @Produces({ "text/csv" })
-  @Path("/{queryname}/export/csv/{format}")
-  public Response getQueryCsvExport(
-      @PathParam("queryname") String queryName,
-      @PathParam("format") String format) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "/export/csv/" + format + "\tGET");
+    @GET
+    @Produces({"text/csv" })
+    @Path("/{queryname}/export/csv/{format}")
+    public Response getQueryCsvExport(
+            @PathParam("queryname") String queryName,
+            @PathParam("format") String format, @QueryParam("exportname") @DefaultValue("") String name){
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"  + "\t/query/" + queryName + "/export/csv/"+format+"\tGET");
+        }
+        try {
+            byte[] doc = thinQueryService.getExport(queryName,"csv",format);
+            if(name == null || name.equals("")) {
+                 name = SaikuProperties.webExportCsvName;
+            }
+
+            return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
+                    "content-disposition",
+                    "attachment; filename = " + name + ".csv").header(
+                    "content-length",doc.length).build();
+        }
+        catch (Exception e) {
+            log.error("Cannot get csv for query (" + queryName + ")",e);
+            String error = ExceptionUtils.getRootCauseMessage(e);
+            throw new WebApplicationException(Response.serverError().entity(error).build());
+        }
+    }
+
+    @POST
+    @Consumes("application/x-www-form-urlencoded")
+    @Path("/{queryname}/zoomin")
+    public ThinQuery zoomIn(
+            @PathParam("queryname") String queryName,
+            @FormParam("selections") String positionListString) {
+        try {
+
+            if (log.isDebugEnabled()) {
+                log.debug("TRACK\t"  + "\t/query/" + queryName + "/zoomIn\tPUT");
+            }
+            List<List<Integer>> realPositions = new ArrayList<List<Integer>>();
+            if (StringUtils.isNotBlank(positionListString)) {
+                ObjectMapper mapper = new ObjectMapper();
+                String[] positions = mapper.readValue(positionListString, TypeFactory.arrayType(String.class));
+                if (positions != null && positions.length > 0) {
+                    for (String position : positions) {
+                        String[] rPos = position.split(":");
+                        List<Integer> cellPosition = new ArrayList<Integer>();
+
+                        for (String p : rPos) {
+                            Integer pInt = Integer.parseInt(p);
+                            cellPosition.add(pInt);
+                        }
+                        realPositions.add(cellPosition);
+                    }
+                }
+            }
+            return thinQueryService.zoomIn(queryName, realPositions);
+
+        } catch (Exception e){
+            log.error("Cannot zoom in on query (" + queryName + ")",e);
+            throw new WebApplicationException(e);
+        }
     }
     try {
       byte[] doc = thinQueryService.getExport(queryName, "csv", format);
@@ -338,9 +439,62 @@ public class Query2Resource {
             String[] rPos = position.split(":");
             List<Integer> cellPosition = new ArrayList<Integer>();
 
-            for (String p : rPos) {
-              Integer pInt = Integer.parseInt(p);
-              cellPosition.add(pInt);
+    @GET
+    @Produces({"application/json" })
+    @Path("/{queryname}/drillthrough")
+    public QueryResult drillthrough(
+            @PathParam("queryname") String queryName,
+            @QueryParam("maxrows") @DefaultValue("100") Integer maxrows,
+            @QueryParam("position") String position,
+            @QueryParam("returns") String returns)
+    {
+        if (log.isDebugEnabled()) {
+            log.debug("TRACK\t"  + "\t/query/" + queryName + "/drillthrough\tGET");
+        }
+        QueryResult rsc;
+        ResultSet rs = null;
+        try {
+            Long start = (new Date()).getTime();
+            if (position == null) {
+                rs = thinQueryService.drillthrough(queryName, maxrows, returns);
+            } else {
+                String[] positions = position.split(":");
+                List<Integer> cellPosition = new ArrayList<Integer>();
+
+                for (String p : positions) {
+                    Integer pInt = Integer.parseInt(p);
+                    cellPosition.add(pInt);
+                }
+
+                rs = thinQueryService.drillthrough(queryName, cellPosition, maxrows, returns);
+            }
+            rsc = RestUtil.convert(rs);
+            Long runtime = (new Date()).getTime()- start;
+            rsc.setRuntime(runtime.intValue());
+
+        }
+        catch (Exception e) {
+            log.error("Cannot execute query (" + queryName + ")",e);
+            String error = ExceptionUtils.getRootCauseMessage(e);
+            rsc =  new QueryResult(error);
+
+        }
+        finally {
+            if (rs != null) {
+                Statement statement = null;
+                try {
+                    statement = rs.getStatement();
+                } catch (Exception e) {
+                    throw new SaikuServiceException(e);
+                } finally {
+                    try {
+                        rs.close();
+                        if (statement != null) {
+                            statement.close();
+                        }
+                    } catch (Exception ee) {};
+
+                }
             }
             realPositions.add(cellPosition);
           }
@@ -400,128 +554,77 @@ public class Query2Resource {
           statement = rs.getStatement();
           con = rs.getStatement().getConnection();
         } catch (Exception e) {
-          throw new SaikuServiceException(e);
-        } finally {
-          try {
-            rs.close();
-            if (statement != null) {
-              statement.close();
+            log.error("Cannot export drillthrough query (" + queryName + ")",e);
+            return Response.serverError().build();
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    Statement statement = rs.getStatement();
+                    statement.close();
+                    rs.close();
+                } catch (SQLException e) {
+                    throw new SaikuServiceException(e);
+                } finally {
+                }
             }
           } catch (Exception ee) {
             LOG.error("Could not close statement", ee);
           }
 
-          rs = null;
-        }
-      }
+    @POST
+    @Produces({"application/pdf" })
+    @Path("/{queryname}/export/pdf")
+    public Response exportPdfWithChart(
+            @PathParam("queryname")  String queryName,
+            @PathParam("svg")  @DefaultValue("") String svg)
+    {
+        return exportPdfWithChartAndFormat(queryName, null, svg, null);
     }
-    return rsc;
 
-  }
-
-
-  @GET
-  @Produces({ "text/csv" })
-  @Path("/{queryname}/drillthrough/export/csv")
-  public Response getDrillthroughExport(
-      @PathParam("queryname") String queryName,
-      @QueryParam("maxrows") @DefaultValue("100") Integer maxrows,
-      @QueryParam("position") String position,
-      @QueryParam("returns") String returns) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(
-          "TRACK\t" + "\t/query/" + queryName + "/drillthrough/export/csv (maxrows:" + maxrows + " position" + position
-          + ")\tGET");
+    @GET
+    @Produces({"application/pdf" })
+    @Path("/{queryname}/export/pdf")
+    public Response exportPdf(@PathParam("queryname")  String queryName)
+    {
+        return exportPdfWithChartAndFormat(queryName, null, null, null);
     }
-    ResultSet rs = null;
 
-    try {
-      if (position == null) {
-        rs = thinQueryService.drillthrough(queryName, maxrows, returns);
-      } else {
-        String[] positions = position.split(":");
-        List<Integer> cellPosition = new ArrayList<Integer>();
+    @GET
+    @Produces({"application/pdf" })
+    @Path("/{queryname}/export/pdf/{format}")
+    public Response exportPdfWithFormat(
+            @PathParam("queryname")  String queryName,
+            @PathParam("format") String format, @QueryParam("exportname") String name)
+    {
+        return exportPdfWithChartAndFormat(queryName, format, null, name);
+    }
 
-        for (String p : positions) {
-          Integer pInt = Integer.parseInt(p);
-          cellPosition.add(pInt);
-        }
+    @POST
+    @Produces({"application/pdf" })
+    @Path("/{queryname}/export/pdf/{format}")
+    public Response exportPdfWithChartAndFormat(
+            @PathParam("queryname")  String queryName,
+            @PathParam("format") String format,
+            @FormParam("svg") @DefaultValue("") String svg, @QueryParam("name") String name)
+    {
 
-        rs = thinQueryService.drillthrough(queryName, cellPosition, maxrows, returns);
-      }
-      byte[] doc = thinQueryService.exportResultSetCsv(rs);
-      String name = SaikuProperties.WEBEXPORTCSVNAME;
-      return Response.ok(doc, MediaType.APPLICATION_OCTET_STREAM).header(
-          "content-disposition",
-          "attachment; filename = " + name + "-drillthrough.csv").header(
-          "content-length", doc.length).build();
-
-
-    } catch (Exception e) {
-      LOG.error("Cannot export drillthrough query (" + queryName + ")", e);
-      return Response.serverError().build();
-    } finally {
-      if (rs != null) {
         try {
-          Statement statement = rs.getStatement();
-          statement.close();
-          rs.close();
-        } catch (SQLException e) {
-          throw new SaikuServiceException(e);
-        } finally {
-          rs = null;
+            CellDataSet cs = thinQueryService.getFormattedResult(queryName, format);
+            QueryResult qr = RestUtil.convert(cs);
+            PdfReport pdf = new PdfReport();
+            byte[] doc  = pdf.pdf(qr, svg);
+            if(name==null || name.equals("")){
+                name = "export";
+            }
+            return Response.ok(doc).type("application/pdf").header(
+                    "content-disposition",
+                    "attachment; filename = "+name+".pdf").header(
+                    "content-length",doc.length).build();
+        } catch (Exception e) {
+            log.error("Error exporting query to  PDF", e);
+            return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
         }
-      }
-    }
-
-
-  }
-
-  @POST
-  @Produces({ "application/pdf" })
-  @Path("/{queryname}/export/pdf")
-  public Response exportPdfWithChart(
-      @PathParam("queryname") String queryName,
-      @PathParam("svg") @DefaultValue("") String svg) {
-    return exportPdfWithChartAndFormat(queryName, null, svg);
-  }
-
-  @GET
-  @Produces({ "application/pdf" })
-  @Path("/{queryname}/export/pdf")
-  public Response exportPdf(@PathParam("queryname") String queryName) {
-    return exportPdfWithChartAndFormat(queryName, null, null);
-  }
-
-  @GET
-  @Produces({ "application/pdf" })
-  @Path("/{queryname}/export/pdf/{format}")
-  public Response exportPdfWithFormat(
-      @PathParam("queryname") String queryName,
-      @PathParam("format") String format) {
-    return exportPdfWithChartAndFormat(queryName, format, null);
-  }
-
-  @POST
-  @Produces({ "application/pdf" })
-  @Path("/{queryname}/export/pdf/{format}")
-  public Response exportPdfWithChartAndFormat(
-      @PathParam("queryname") String queryName,
-      @PathParam("format") String format,
-      @FormParam("svg") @DefaultValue("") String svg) {
-
-    try {
-      CellDataSet cs = thinQueryService.getFormattedResult(queryName, format);
-      QueryResult qr = RestUtil.convert(cs);
-      PdfReport pdf = new PdfReport();
-      byte[] doc = pdf.pdf(qr, svg);
-      return Response.ok(doc).type("application/pdf").header(
-          "content-disposition",
-          "attachment; filename = export.pdf").header(
-          "content-length", doc.length).build();
-    } catch (Exception e) {
-      LOG.error("Error exporting query to  PDF", e);
-      return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
     }
   }
 
@@ -578,17 +681,48 @@ public class Query2Resource {
       LOG.error("Error exporting query to  HTML", e);
       return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
     }
-  }
 
-  @POST
-  @Produces({ "application/json" })
-  @Path("/{queryname}/drillacross")
-  public ThinQuery drillacross(
-      @PathParam("queryname") String queryName,
-      @FormParam("position") String position,
-      @FormParam("drill") String returns) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("TRACK\t" + "\t/query/" + queryName + "/drillacross\tPOST");
+    @POST
+    @Produces({"text/html" })
+    @Path("/export/html")
+    public Response exportHtml(
+            ThinQuery tq,
+            @QueryParam("format") String format,
+            @QueryParam("css") @DefaultValue("false") Boolean css,
+            @QueryParam("tableonly") @DefaultValue("false") Boolean tableonly,
+            @QueryParam("wrapcontent") @DefaultValue("true") Boolean wrapcontent)
+    {
+
+        try {
+            CellDataSet cs;
+            if (StringUtils.isNotBlank(format)) {
+                cs = thinQueryService.execute(tq, format);
+            } else {
+                cs = thinQueryService.execute(tq);
+            }
+            QueryResult qr = RestUtil.convert(cs);
+            String content = JSConverter.convertToHtml(qr, wrapcontent);
+            String html = "";
+            if (!tableonly) {
+                html += "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
+                if (css) {
+                    html += "<style>\n";
+                    InputStream is = JSConverter.class.getResourceAsStream("saiku.table.full.css");
+                    String cssContent = IOUtils.toString(is);
+                    html += cssContent;
+                    html += "</style>\n";
+                }
+                html += "</head>\n<body><div class='workspace_results'>\n";
+            }
+            html += content;
+            if (!tableonly) {
+                html += "\n</div></body></html>";
+            }
+            return Response.ok(html).build();
+        } catch (Exception e) {
+            log.error("Error exporting query to  HTML", e);
+            return Response.serverError().entity(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     try {

@@ -15,7 +15,6 @@
  */
 
 package org.saiku.web.export;
-
 import org.saiku.web.rest.objects.resultset.QueryResult;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -23,45 +22,63 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
+import java.io.*;
+import java.util.Properties;
 
-/**
- * JSConverter
- */
 public class JSConverter {
-  private JSConverter() {
+    public static String convertToHtml(QueryResult qr, boolean wrapcontent) throws IOException {
+        ObjectMapper om = new ObjectMapper();
+        StringWriter sw = new StringWriter();
+        Context context = Context.enter();
+        Scriptable globalScope = context.initStandardObjects();
+        Reader underscoreReader = new InputStreamReader(JSConverter.class.getResourceAsStream("underscore.js"));
+        context.evaluateReader(globalScope, underscoreReader, "underscore.js", 1, null);
+        Reader srReader = new InputStreamReader(JSConverter.class.getResourceAsStream("SaikuRenderer.js"));
+        context.evaluateReader(globalScope, srReader, "SaikuRenderer.js", 1, null);
+        Reader strReader = new InputStreamReader(JSConverter.class.getResourceAsStream("SaikuTableRenderer.js"));
+        context.evaluateReader(globalScope, strReader, "SaikuTableRenderer.js", 1, null);
+        String data = om.writeValueAsString(qr);
+        Object wrappedQr = Context.javaToJS(data, globalScope);
+        ScriptableObject.putProperty(globalScope, "data", wrappedQr);
+        Object wrappedOut = Context.javaToJS(sw, globalScope);
+        ScriptableObject.putProperty(globalScope, "out", wrappedOut);
+        String code =
+            "eval('var cellset = ' + data); \nvar renderer = new SaikuTableRenderer(); \nvar html = renderer.render(cellset, { wrapContent : "
+            + wrapcontent + " }); out.write(html);";
+        context.evaluateString(globalScope, code, "<mem>", 1, null);
+        Context.exit();
+        String content = sw.toString();
+        if(getVersion()!=null && !getVersion().contains("EE")) {
+            content =
+                content + "<div style='margin-top:10px;'><h5>Export Provided By Saiku Analytics Community Edition(http://meteorite.bi)"
+                + "</h5></div>";
+        }
+        return content;
+    }
 
-  }
+    public static String convertToHtml(QueryResult qr) throws IOException {
+        return convertToHtml(qr, false);
+    }
 
-  public static String convertToHtml(QueryResult qr, boolean wrapcontent) throws IOException {
-    ObjectMapper om = new ObjectMapper();
-    StringWriter sw = new StringWriter();
-    Context context = Context.enter();
-    Scriptable globalScope = context.initStandardObjects();
-    Reader underscoreReader = new InputStreamReader(JSConverter.class.getResourceAsStream("underscore.js"));
-    context.evaluateReader(globalScope, underscoreReader, "underscore.js", 1, null);
-    Reader srReader = new InputStreamReader(JSConverter.class.getResourceAsStream("SaikuRenderer.js"));
-    context.evaluateReader(globalScope, srReader, "SaikuRenderer.js", 1, null);
-    Reader strReader = new InputStreamReader(JSConverter.class.getResourceAsStream("SaikuTableRenderer.js"));
-    context.evaluateReader(globalScope, strReader, "SaikuTableRenderer.js", 1, null);
-    String data = om.writeValueAsString(qr);
-    Object wrappedQr = Context.javaToJS(data, globalScope);
-    ScriptableObject.putProperty(globalScope, "data", wrappedQr);
-    Object wrappedOut = Context.javaToJS(sw, globalScope);
-    ScriptableObject.putProperty(globalScope, "out", wrappedOut);
-    String code =
-        "eval('var cellset = ' + data); \nvar renderer = new SaikuTableRenderer(); \nvar html = renderer.render(cellset, { wrapContent : "
-        + wrapcontent + " }); out.write(html);";
-    context.evaluateString(globalScope, code, "<mem>", 1, null);
-    Context.exit();
-    String content = sw.toString();
-    return content;
-  }
+    public static String getVersion() {
+        Properties prop = new Properties();
+        InputStream input = null;
+        String version = "";
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        InputStream is = classloader.getResourceAsStream("org/saiku/web/rest/resources/version.properties");
+        try {
 
-  public static String convertToHtml(QueryResult qr) throws IOException {
-    return convertToHtml(qr, false);
-  }
+            //input = new FileInputStream("version.properties");
+
+            // load a properties file
+            prop.load(is);
+
+            // get the property value and print it out
+            System.out.println(prop.getProperty("VERSION"));
+            version = prop.getProperty("VERSION");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return version;
+    }
 }

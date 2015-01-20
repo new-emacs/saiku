@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,14 @@
  * Model which fetches the information of license
  */
 var License = Backbone.Model.extend({
+	url: 'api/license',
+
 	initialize: function() {
 		_.bindAll(this, 'fetch_license');
 	},
 
 	fetch_license: function(path, callback) {
-		$.ajax({
-			type: 'GET',
-			url: Settings.REST_URL + path,
+		this.fetch({
 			success: function(res) {
 				if (callback && typeof(callback) === 'function') {
 					callback({status: 'success', data: res});
@@ -38,4 +38,13 @@ var License = Backbone.Model.extend({
 			}
 		});
 	}
+});
+
+var LicenseUserModel = Backbone.Model.extend({
+	url: 'api/license/users'
+});
+
+var LicenseUsersCollection = Backbone.Collection.extend({
+	url: 'api/license/users',
+    model: LicenseUserModel
 });

@@ -2,16 +2,16 @@
         <parent>
                 <artifactId>saiku</artifactId>
                 <groupId>org.saiku</groupId>
-                <version>3.1-SNAPSHOT</version>
+                <version>3.0.9-SNAPSHOT</version>
         </parent>
 	
-<modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 	<artifactId>saiku-server</artifactId>
 	<packaging>pom</packaging>
-    <version>3.1-SNAPSHOT</version>
-    <properties>
-        <checkstyle.skip>true</checkstyle.skip>
-    </properties>
+    <version>3.0.9-SNAPSHOT</version>
+	<properties>
+		<min>nomin</min>
+	</properties>
 	<build>
 		<plugins>
 			<plugin>
@@ -31,6 +31,15 @@
 									<artifactId>saiku-webapp</artifactId>
 									<version>${project.version}</version>
 									<type>war</type>
+									<outputDirectory>target/stage/</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.saiku</groupId>
+									<artifactId>saiku-ui</artifactId>
+									<version>${project.version}</version>
+									<classifier>${min}</classifier>
+									<type>war</type>
+									<destFileName>saiku-ui.war</destFileName>
 									<outputDirectory>target/stage/</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -102,13 +111,14 @@
           							    <exclude name="webapps/ROOT/**" />
 									</fileset>
 								</copy>
-								
+
+
 								<unzip dest="target/dist/saiku-server/tomcat/webapps/ROOT">
 									<fileset dir="target/stage/">
-										<include name="saiku-ui-${project.version}.war" />
+										<include name="saiku-ui.war" />
 									</fileset>
 								</unzip>
-								
+
 								<copy todir="target/dist/saiku-server/tomcat/webapps/saiku">
 									<fileset dir="target/stage/webapp" />
 								</copy>

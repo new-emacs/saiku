@@ -4,34 +4,33 @@
     <parent>
         <artifactId>saiku-core</artifactId>
         <groupId>org.saiku</groupId>
-        <version>3.1-SNAPSHOT</version>
+        <version>3.0.9-SNAPSHOT</version>
     </parent>
-    <artifactId>saiku-olap-util</artifactId>
-    <packaging>jar</packaging>
-    <version>3.1-SNAPSHOT</version>
-    <name>saiku olap util</name>
-    <properties>
-        <maven.compiler.source>1.5</maven.compiler.source>
-        <maven.compiler.target>1.5</maven.compiler.target>
-        <pentaho.libs.version>3.10.0-stable</pentaho.libs.version>
-        <slf4j.version>1.6.1</slf4j.version>
-        <checkstyle.skip>true</checkstyle.skip>
-    </properties>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
+	<artifactId>saiku-olap-util</artifactId>
+	<packaging>jar</packaging>
+	<version>3.0.9-SNAPSHOT</version>
+	<name>saiku olap util</name>
+	<properties>
+		<maven.compiler.source>1.5</maven.compiler.source>
+		<maven.compiler.target>1.5</maven.compiler.target>
+		<pentaho.libs.version>3.10.0-stable</pentaho.libs.version>
+		<slf4j.version>1.6.1</slf4j.version>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.0.2</version>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
                 <version>2.7</version>
                 <!-- set encoding to something not platform dependent -->
                 <configuration>

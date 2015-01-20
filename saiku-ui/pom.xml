@@ -3,17 +3,25 @@
 <parent>
 		<artifactId>saiku</artifactId>
 		<groupId>org.saiku</groupId>
-		<version>3.1-SNAPSHOT</version>
+		<version>3.0.9-SNAPSHOT</version>
 	</parent>
-	<groupId>org.saiku</groupId>
 	<artifactId>saiku-ui</artifactId>
 	<packaging>pom</packaging>
-	<version>3.1-SNAPSHOT</version>
- <properties>
-        <checkstyle.skip>true</checkstyle.skip>
+	<version>3.0.9-SNAPSHOT</version>
+        <properties>
+	<checkstyle.skip>true</checkstyle.skip>
 	 <build.prod>false</build.prod>
-    </properties>
+     </properties>
 	<build>
+		<resources>
+			<resource>
+				<directory>js/saiku</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>Settings.js</include>
+				</includes>
+			</resource>
+		</resources>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -186,6 +194,7 @@
 						<jsSourceInclude>views/MDXModal.js</jsSourceInclude>
 						<jsSourceInclude>views/SelectionsModal.js</jsSourceInclude>
 						<jsSourceInclude>views/DrillthroughModal.js</jsSourceInclude>
+						<jsSourceInclude>views/DrillAcrossModal.js</jsSourceInclude>
 						<jsSourceInclude>views/PermissionsModal.js</jsSourceInclude>
 						<jsSourceInclude>views/LoginForm.js</jsSourceInclude>
 						<jsSourceInclude>views/DemoLoginForm.js</jsSourceInclude>
@@ -205,7 +214,7 @@
 						<jsSourceInclude>views/SaveQuery.js</jsSourceInclude>
 						<jsSourceInclude>views/OpenDialog.js</jsSourceInclude>
 						<jsSourceInclude>views/Upgrade.js</jsSourceInclude>
-						<jsSourceInclude>views/MeasuresModal.js</jsSourceInclude>
+						<jsSourceInclude>views/SessionErrorModal.js</jsSourceInclude>
 						<jsSourceInclude>models/License.js</jsSourceInclude>
 						<jsSourceInclude>models/SaikuOlapQuery.js</jsSourceInclude>
 						<jsSourceInclude>models/Plugin.js</jsSourceInclude>
@@ -269,16 +278,16 @@
 						<configuration>
 							<tasks>
 							<mkdir dir="target/saiku-ui" />
+								<mkdir dir="target/saiku-ui2" />
 
-                                <copy file="target/saiku-ui-3.1-SNAPSHOT/saiku.min.js" tofile="target/saiku-ui/saiku.min.js"/>
-								<taskdef resource="net/sf/antcontrib/antcontrib.properties"
-										 classpathref="maven.plugin.classpath" />
-								<if>
+                                <copy file="target/saiku-ui-${project.version}/saiku.min.js" tofile="target/saiku-ui/saiku.min.js" />
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="maven.plugin.classpath" />
+								<!--<if>
 								<equals arg1="${build.prod}" arg2="true" />
-								<then>
+								<then>-->
 									<copy todir="target/saiku-ui">
 										<fileset dir="${basedir}/">
-											<exclude name="js/saiku/"/>
+											<exclude name="js/saiku/" />
 											<exclude name="target/" />
 											<exclude name="pom.xml" />
 											<exclude name=".git/" />
@@ -286,14 +295,31 @@
 
 										</fileset>
 										<fileset dir="${basedir}/">
-											<include name="js/saiku/plugins/"/>
-											<include name="js/saiku/Settings.js"/>
-											<include name="js/saiku/Saiku.js"/>
+											<include name="js/saiku/plugins/" />
+											<include name="js/saiku/Settings.js" />
+											<include name="js/saiku/Saiku.js" />
 										</fileset>
 									</copy>
-									<copy overwrite="true" file="target/saiku-ui/index_prod.html"
-										  tofile="target/saiku-ui/index.html"/>
-								</then>
+									<patch patchfile="minify.patch" originalfile="target/saiku-ui/index.html" />
+
+									<copy todir="target/saiku-ui2">
+										<fileset dir="${basedir}/">
+											<exclude name="target/" />
+											<exclude name="pom.xml" />
+											<exclude name=".git/" />
+											<exclude name=".gitignore" />
+
+										</fileset>
+										<fileset dir="${basedir}/">
+											<include name="js/saiku/plugins/" />
+											<include name="js/saiku/Settings.js" />
+											<include name="js/saiku/Saiku.js" />
+										</fileset>
+									</copy>
+									<zip destfile="target/saiku-ui-nomunge-${project.version}.war">
+										<zipfileset dir="target/saiku-ui2/" />
+									</zip>
+								<!--</then>
 									<else>
 										<copy todir="target/saiku-ui">
 											<fileset dir="${basedir}/">
@@ -304,17 +330,16 @@
 
 											</fileset>
 											<fileset dir="${basedir}/">
-												<include name="js/saiku/plugins/"/>
-												<include name="js/saiku/Settings.js"/>
-												<include name="js/saiku/Saiku.js"/>
+												<include name="js/saiku/plugins/" />
+												<include name="js/saiku/Settings.js" />
+												<include name="js/saiku/Saiku.js" />
 											</fileset>
 										</copy>
 									</else>
-								</if>
-                                <!--<copy file="target/saiku-ui-3.1-SNAPSHOT/saiku.min.js.gz"
-									   tofile="target/saiku-ui/saiku.min.js.gz"/>-->
+								</if>-->
+                                <!--<copy file="target/saiku-ui-3.1-SNAPSHOT/saiku.min.js.gz" tofile="target/saiku-ui/saiku.min.js.gz" />-->
 <!--                                <copy todir="target/saiku-ui/doc/">
-									<fileset dir="${basedir}/target/jsdoc"/>
+									<fileset dir="${basedir}/target/jsdoc" />
 								</copy>
 -->
 								<zip destfile="target/saiku-ui-${project.version}.zip">
@@ -323,6 +348,7 @@
 								<zip destfile="target/saiku-ui-${project.version}.war">
 									<zipfileset dir="target/saiku-ui/" />
 								</zip>
+
 							</tasks>
 						</configuration>
 					</execution>
@@ -340,11 +366,16 @@
 			                <goal>attach-artifact</goal>
 			            </goals>
 			            <configuration>
-			                <artifacts>
+							<artifacts>
 			                    <artifact>
 			                        <file>target/saiku-ui-${project.version}.war</file>
 			                        <type>war</type>
 			                    </artifact>
+								<artifact>
+									<file>target/saiku-ui-nomunge-${project.version}.war</file>
+									<classifier>nomin</classifier>
+									<type>war</type>
+								</artifact>
 			                     <artifact>
 			                        <file>target/saiku-ui-${project.version}.zip</file>
 			                        <type>zip</type>

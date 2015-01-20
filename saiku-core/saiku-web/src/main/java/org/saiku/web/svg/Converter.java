@@ -31,6 +31,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+public abstract class Converter
+{
+
+    abstract public void convert(InputStream in, OutputStream out, Integer size) throws IOException, TranscoderException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Converter.
  */

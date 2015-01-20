@@ -22,7 +22,7 @@ var DateFilterModal = Modal.extend({
 
 	buttons: [
 		{ text: 'Save', method: 'save' },
-		{ text: 'Cancel', method: 'close' }
+		{ text: 'Cancel', method: 'finished' }
 	],
 
 	events: {
@@ -33,16 +33,16 @@ var DateFilterModal = Modal.extend({
 		'click #add-date'        : 'add_selected_date',
 		'click .del-date'        : 'del_selected_date'
 	},
-	
-	template_days_mdx: 'Filter([Time].[Weekly].[Day].members, [Time].[Weekly].[Day].CurrentMember.Properties("{saikuDateProperty}") {comparisonOperator} \'{dates}\'',
-	
-	template_many_years_mdx: ' {logicalOperator} [Time].[Weekly].[Day].CurrentMember.Properties("{saikuDateProperty}") {comparisonOperator} \'{dates}\'',
 
-	template_mdx: '{parent} CurrentDateMember([{dimension}].[{hierarchy}], \'[\"{dimension}.{hierarchy}\"]\\\.{AnalyzerDateFormat}\', EXACT)',
+	template_days_mdx: 'Filter({parent}.Members, {parent}.CurrentMember.NAME {comparisonOperator} \'{dates}\'',
 
-	template_last_mdx: '{parent} LastPeriods({periodamount}, CurrentDateMember([{dimension}].[{hierarchy}], \'[\"{dimension}.{hierarchy}\"]\\\.{AnalyzerDateFormat}\', EXACT))',
+	template_many_years_mdx: ' {logicalOperator} {parent}.CurrentMember.NAME {comparisonOperator} \'{dates}\'',
 
-	template_selection: _.template(
+	template_mdx: '{parent} CurrentDateMember([{dimension}.{hierarchy}], \'["{dimension}.{hierarchy}"]\\\.{AnalyzerDateFormat}\', EXACT)',
+
+	template_last_mdx: '{parent} LastPeriods({periodamount}, CurrentDateMember([{dimension}.{hierarchy}], \'["{dimension}.{hierarchy}"]\\\.{AnalyzerDateFormat}\', EXACT))',
+
+	template_dialog: _.template(
 		'<div class="box-selections">' +
 			'<div class="selection-option">' +
 				'<input type="radio" class="selection-radio" name="selection-radio" id="selection-radio-operator" level-type="TIME_DAYS" disabled>' +
@@ -51,28 +51,28 @@ var DateFilterModal = Modal.extend({
 				'<span class="i18n">Operator:</span><br>' +
 				'<div class="selection-options">' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-equals" value="="> Equals</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-equals" value="="> Equals</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-after" value=">"> After</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-after" value=">"> After</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-before" value="<"> Before</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-before" value="<"> Before</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-between" value=">|<"> Between</label><br>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-between" value=">|<"> Between</label><br>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-different" value="<>"> Different</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-different" value="<>"> Different</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-after-equals" value=">="> After&Equals</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-after-equals" value=">="> After&Equals</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-before-equals" value="<="> Before&Equals</label>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-before-equals" value="<="> Before&Equals</label>' +
 					'</div>' +
 					'<div class="form-group-selection">' +
-						'<label><input type="radio" name="operator-radio" class="operator-radio op-notbetween"> Not Between</label><br>' +
+						'<label><input type="radio" name="operator-radio" class="operator-radio" id="op-notbetween"> Not Between</label><br>' +
 					'</div>' +
 					'<div class="inline-form-group">' +
 						'<div class="form-group" id="div-selection-date" hidden>' +
@@ -132,35 +132,15 @@ var DateFilterModal = Modal.extend({
 					'</div>' +
 					'<div class="form-group-selection">' +
 						'<select id="period-select">' +
-							'<option name="TIME_DAYS" value="">Day(s)</option>' +
-							'<option name="TIME_WEEKS" value="">Week(s)</option>' +
-							'<option name="TIME_MONTHS" value="">Month(s)</option>' +
-							'<option name="TIME_YEARS" value="">Year(s)</option>' +
+							'<option name="TIME_DAYS" id="rd-days">Day(s)</option>' +
+							'<option name="TIME_WEEKS" id="rd-weeks">Week(s)</option>' +
+							'<option name="TIME_MONTHS" id="rd-months">Month(s)</option>' +
+							'<option name="TIME_YEARS" id="rd-years">Year(s)</option>' +
 						'</select>' +
 					'</div>' +
 				'</div>' +
 			'</div>' +
 		'</div>'
-		// '<div class="box-selections">' +
-		// 	'<div class="available-selections">' +
-		// 		'<span class="i18n">Available member:</span><br>' +
-		// 		'<div class="selection-options"></div>' +
-		// 	'</div>' +
-		// '</div>' +
-		// '<div class="box-selections">' +
-		// 	'<div class="selection_buttons">' +
-		// 		'<a class="form_button">&nbsp;&gt;&nbsp;</a><br><br>' +
-		// 		'<a class="form_button">&gt;&gt;</a><br><br>' +
-		// 		'<a class="form_button">&lt;&lt;</a><br><br>' +
-		// 		'<a class="form_button">&nbsp;&lt;&nbsp;</a>' +
-		// 	'</div>' +
-		// '</div>' +
-		// '<div class="box-selections">' +
-		// 	'<div class="available-selections">' +
-		// 		'<span class="i18n">Used members:</span><br>' +
-		// 		'<div class="selection-options"></div>' +
-		// 	'</div>' +
-		// '</div>'
 	),
 
 	initialize: function(args) {
@@ -169,9 +149,11 @@ var DateFilterModal = Modal.extend({
 		this.options.title = 'Selections for Year';
 		this.message = 'Loading...';
 		this.query = args.workspace.query;
+		this.selections = [];
 		this.dates = [];
+		// this.storage = new Saiku.singleton();
 
-		// _.bind(this);
+		_.bindAll(this, 'finished');
 
 		// Resize when rendered
 		this.bind('open', this.post_render);
@@ -186,8 +168,7 @@ var DateFilterModal = Modal.extend({
 		});
 
 		// Load template
-		this.$el.find('.dialog_body')
-			.html(this.template_selection);
+		this.$el.find('.dialog_body').html(this.template_dialog);
 
 		this.$el.find('.available-selections *').prop('disabled', true).off('click');
 
@@ -200,6 +181,9 @@ var DateFilterModal = Modal.extend({
 		// Initialize adding values
 		this.add_values_fixed_date();
 		this.add_values_last_periods();
+
+		// console.log(this.storage.get());
+		this.populate();
 	},
 
 	post_render: function(args) {
@@ -216,7 +200,10 @@ var DateFilterModal = Modal.extend({
 		this.$el.find('.selection-radio').each(function(key, radio) {
 			levelType = $(radio).attr('level-type');
 			_.find(self.dataLevels, function(value, key, list) {
-				if (levelType === value.levelType || (value.saikuDateProperty && value.saikuDayFormatString)) {
+				// if (levelType === value.levelType || value.saikuDayFormatString) {
+				if (self.name === value.name &&
+					levelType === value.levelType && 
+					value.saikuDayFormatString) {
 					$(radio).prop('disabled', false);
 				}
 			});
@@ -224,41 +211,51 @@ var DateFilterModal = Modal.extend({
 	},
 
 	show_fields: function(event) {
-		var $currentTarget = $(event.currentTarget),
+		var $currentTarget = event.type ? $(event.currentTarget) : $(event),
 			name = $currentTarget.parent('label').text().split(' ')[1];
-		switch (name) {
-		case 'Equals':
-		case 'Different':
-			$currentTarget.closest('.selection-options').find('#div-selection-date').show();
-			$currentTarget.closest('.selection-options').find('#div-selected-date').show();
-			$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
-			$currentTarget.closest('.selection-options').find('#add-date').show();
-			break;
-		case 'After':
-		case 'After&Equals':
-		case 'Before':
-		case 'Before&Equals':
-			$currentTarget.closest('.selection-options').find('#div-selection-date').show();
-			$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
-			$currentTarget.closest('.selection-options').find('#add-date').hide();
-			break;
-		case 'Between':
-		case 'Not':
-			$currentTarget.closest('.selection-options').find('#div-selection-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-start-date').show();
-			$currentTarget.closest('.selection-options').find('#div-select-end-date').show();
-			$currentTarget.closest('.selection-options').find('#add-date').hide();
-			break;
-		default:
-			$currentTarget.closest('.selection-options').find('#div-selection-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
-			$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
-			$currentTarget.closest('.selection-options').find('#add-date').hide();
+
+		if (name !== undefined) {
+			switch (name) {
+			case 'Equals':
+			case 'Different':
+				$currentTarget.closest('.selection-options').find('#div-selection-date').show();
+				$currentTarget.closest('.selection-options').find('#div-selected-date').show();
+				$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
+				$currentTarget.closest('.selection-options').find('#add-date').show();
+				break;
+			case 'After':
+			case 'After&Equals':
+			case 'Before':
+			case 'Before&Equals':
+				$currentTarget.closest('.selection-options').find('#div-selection-date').show();
+				$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
+				$currentTarget.closest('.selection-options').find('#add-date').hide();
+				break;
+			case 'Between':
+			case 'Not':
+				$currentTarget.closest('.selection-options').find('#div-selection-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-start-date').show();
+				$currentTarget.closest('.selection-options').find('#div-select-end-date').show();
+				$currentTarget.closest('.selection-options').find('#add-date').hide();
+				break;
+			default:
+				$currentTarget.closest('.selection-options').find('#div-selection-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-selected-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-start-date').hide();
+				$currentTarget.closest('.selection-options').find('#div-select-end-date').hide();
+				$currentTarget.closest('.selection-options').find('#add-date').hide();
+			}
+		}
+		else {
+			this.$el.find('.selection-options').find('#div-selection-date').hide();
+			this.$el.find('.selection-options').find('#div-selected-date').hide();
+			this.$el.find('.selection-options').find('#div-select-start-date').hide();
+			this.$el.find('.selection-options').find('#div-select-end-date').hide();
+			this.$el.find('.selection-options').find('#add-date').hide();
 		}
 	},
 
@@ -266,18 +263,27 @@ var DateFilterModal = Modal.extend({
 		var self = this,
 			dataLevels = [];
 		_.each(this.data.hierarchies.levels, function(value, key, list) {
-			if (list[key].annotations.AnalyzerDateFormat !== undefined) {
-				dataLevels.push({
-					name: list[key].name,
-					analyzerDateFormat: list[key].annotations.AnalyzerDateFormat.replace(/[.]/gi, '\\\.'),
-					levelType: list[key].levelType,
-					saikuDateProperty: list[key].annotations.SaikuDateProperty || '',
-					saikuDayFormatString: list[key].annotations.SaikuDayFormatString || ''
-				});
-
-				if (list[key].annotations.SaikuDateProperty &&
-					list[key].annotations.SaikuDayFormatString) {
-					self.saikuDateProperty = list[key].annotations.SaikuDateProperty;
+			if (list[key].annotations.AnalyzerDateFormat !== undefined || list[key].annotations.SaikuDayFormatString !== undefined) {
+				if (list[key].annotations.AnalyzerDateFormat !== undefined) {
+					dataLevels.push({
+						name: list[key].name,
+						analyzerDateFormat: list[key].annotations.AnalyzerDateFormat.replace(/[.]/gi, '\\\.'),
+						levelType: list[key].levelType,
+						saikuDateProperty: list[key].annotations.SaikuDateProperty || '',
+						saikuDayFormatString: list[key].annotations.SaikuDayFormatString || ''
+					});
+				}
+				else {
+					dataLevels.push({
+						name: list[key].name,
+						analyzerDateFormat: '',
+						levelType: list[key].levelType,
+						saikuDateProperty: list[key].annotations.SaikuDateProperty || '',
+						saikuDayFormatString: list[key].annotations.SaikuDayFormatString || ''
+					});
+				}
+				if (list[key].annotations.SaikuDayFormatString) {
+					self.saikuDateProperty = '';
 					self.saikuDayFormatString = list[key].annotations.SaikuDayFormatString;
 				}
 			}
@@ -303,9 +309,9 @@ var DateFilterModal = Modal.extend({
 				});
 
 				$(selection).find('input:radio').each(function(key, radio) {
-					if ($(radio).val() === null || 
-						$(radio).val() === undefined || 
-						$(radio).val() === '' || 
+					if ($(radio).val() === null ||
+						$(radio).val() === undefined ||
+						$(radio).val() === '' ||
 						$(radio).val() === 'on') {
 						$(radio).addClass('keep-disabled');
 					}
@@ -329,9 +335,9 @@ var DateFilterModal = Modal.extend({
 					});
 				});
 				$(selection).find('#period-select > option').each(function(key, radio) {
-					if ($(radio).val() === null || 
-						$(radio).val() === undefined || 
-						$(radio).val() === '') {
+					if ($(radio).attr('value') === null ||
+						$(radio).attr('value') === undefined ||
+						$(radio).attr('value') === '') {
 						$(radio).addClass('keep-disabled');
 					}
 				});
@@ -340,22 +346,42 @@ var DateFilterModal = Modal.extend({
 	},
 
 	selection_date: function(event) {
-		var $currentTarget = $(event.currentTarget);
-		$currentTarget.datepicker({ 
-			dateFormat: 'yy/mm/dd' 
+		var $currentTarget = $(event.currentTarget),
+			dateFormat = this.saikuDayFormatString.replace(/yyyy/gi, 'yy');
+		$currentTarget.datepicker({
+			dateFormat: dateFormat
 		});
 	},
 
+	clear_selections: function(event) {
+		// clear dialog
+		this.show_fields(event);
+		this.$el.find('input[type="text"]').val('');
+		this.$el.find('select').prop('selectedIndex', 0);
+		this.$el.find('#selected-date').empty();
+		this.$el.find('.available-selections *').prop('checked', false);
+		// Clear variables
+		this.dates = [];
+	},
+
 	disable_divselections: function(event) {
-		var $currentTarget = $(event.currentTarget);
+		var params = Array.prototype.slice.call(arguments),
+			$currentTarget = event.type ? $(event.currentTarget) : $(event);
+
+		if (!params[1]) {
+			this.clear_selections(event);
+		}
+
 		this.$el.find('.available-selections').attr('available', false);
 		this.$el.find('.available-selections *').prop('disabled', true).off('click');
 		$currentTarget.closest('.box-selections').find('.available-selections').attr('available', true);
 		$currentTarget.closest('.box-selections').find('.available-selections *:not(.keep-disabled)')
 			.prop('disabled', false).on('click');
-		$currentTarget.closest('.box-selections').find('select').each(function(key, selection){
-			$(selection).find("option:not([disabled])").first().attr("selected", "selected");
-		});
+		if (event.type) {
+			$currentTarget.closest('.box-selections').find('select').each(function(key, selection) {
+				$(selection).find('option:not([disabled])').first().attr('selected', 'selected');
+			});
+		}
 	},
 
 	day_format_string: function() {
@@ -393,9 +419,61 @@ var DateFilterModal = Modal.extend({
 		$currentTarget.parent().remove();
 	},
 
+	populate: function() {
+		// var data = this.storage.get();
+		var data = this.get_storage();
+
+		if (data && !(_.isEmpty(data))) {
+			if (data.type === 'operator') {
+				var $selection = this.$el.find('#selection-radio-operator'),
+					$checked = this.$el.find('#' + data.checked),
+					name = $checked.parent('label').text().split(' ')[1],
+					self = this;
+				$selection.prop('checked', true);
+				$checked.prop('checked', true);
+				this.disable_divselections($selection, true);
+				this.show_fields($checked);
+
+				this.dates = data.values;
+
+				if (name === 'After' || name === 'After&Equals' ||
+					name === 'Before' || name === 'Before&Equals') {
+					this.$el.find('#selection-date').val(this.dates[0]);
+				}
+				else if (name === 'Between') {
+					self.$el.find('#start-date').val(this.dates[0]);
+					self.$el.find('#end-date').val(this.dates[1]);
+				}
+				else {
+					_.each(this.dates, function(value, key) {
+						self.$el.find('#selected-date').append($('<li></li>')
+							.text(value)
+							.append('<a href="#" class="del-date">x</a>'));
+					});
+				}
+			}
+			else if (data.type === 'fixed-date') {
+				var $selection = this.$el.find('#selection-radio-fixed-date');
+				$selection.prop('checked', true);
+				this.$el.find('#' + data.checked).prop('checked', true);
+				this.disable_divselections($selection, true);
+			}
+			else {
+				var $selection = this.$el.find('#selection-radio-available');
+				$selection.prop('checked', true);
+				this.$el.find('#date-input').val(data.periodAmount);
+				this.$el.find('select#period-select option[id="' + data.periodSelect + '"]').prop('selected', true);
+				this.disable_divselections($selection, true);
+			}
+		}
+	},
+
 	populate_mdx: function(logExp, fixedDateName, periodamount) {
-		if (logExp.level !== undefined) {
-			logExp.parent = '[{dimension}].[{hierarchy}].[{level}].members,';
+		logExp.tagdim = logExp.dimension.replace(/m/g, '\\m').replace(/y/g, '\\y').replace(/q/g, '\\q').replace(/d/g, '\\d');
+		logExp.taghier = logExp.hierarchy.replace(/m/g, '\\m').replace(/y/g, '\\y').replace(/q/g, '\\q').replace(/d/g, '\\d');
+
+		if ((logExp.workinglevel !== logExp.level) && logExp.workinglevel !== undefined) {
+			logExp.parent = '[{dimension}.{hierarchy}].[{level}].members,';
 			logExp.parent = logExp.parent.replace(/{(\w+)}/g, function(m, p) {
 				return logExp[p];
 			});
@@ -406,6 +484,11 @@ var DateFilterModal = Modal.extend({
 		});
 
 		if (fixedDateName === 'dayperiods') {
+			logExp.parent = '[{dimension}.{hierarchy}].[{level}]';
+			logExp.parent = logExp.parent.replace(/{(\w+)}/g, function(m, p) {
+				return logExp[p];
+			});
+
 			if (this.dates.length > 1) {
 				var len = this.dates.length,
 					i;
@@ -484,28 +567,40 @@ var DateFilterModal = Modal.extend({
 			periodamount,
 			comparisonOperator,
 			saikuDateProperty,
-			dates;
+			dates,
+			selectedData = {};
+
+		if (self.hierarchy === null || self.hierarchy === undefined) {
+			self.hierarchy = self.dimension;
+		}
 
 		this.$el.find('.available-selections').each(function(key, selection) {
 			var analyzerDateFormat;
 
 			if ($(selection).attr('available') === 'true') {
+				selectedData.type = $(selection).attr('selection-name');
+
 				if ($(selection).attr('selection-name') === 'operator') {
 					$(selection).find('input:radio').each(function (key, radio) {
 						if ($(radio).is(':checked') === true) {
 							var name = $(radio).parent('label').text().split(' ')[1];
+							selectedData.checked = $(radio).attr('id');
 
 							if (name === 'After' || name === 'After&Equals' ||
 								name === 'Before' || name === 'Before&Equals') {
+								self.dates = [];
 								self.dates.push(self.$el.find('#selection-date').val());
 							}
 							else if (name === 'Between') {
+								self.dates = [];
 								self.dates.push(self.$el.find('#start-date').val());
 								self.dates.push(self.$el.find('#end-date').val());
 							}
-							
+
+							parentmembers = self.name;
 							fixedDateName = 'dayperiods';
 							comparisonOperator = $(radio).val();
+							selectedData.values = self.dates;
 						}
 					});
 				}
@@ -514,6 +609,7 @@ var DateFilterModal = Modal.extend({
 						if ($(radio).is(":checked") === true) {
 							fixedDateName = $(radio).attr('id').split('-')[1];
 							analyzerDateFormat = $(radio).val();
+							selectedData.checked = $(radio).attr('id');
 						}
 					});
 				}
@@ -521,24 +617,35 @@ var DateFilterModal = Modal.extend({
 					analyzerDateFormat = $('#period-select').find(':selected').val();
 					fixedDateName = 'lastperiods';
 					periodamount = $(selection).find('input:text').val();
+					selectedData.fixedDateName = fixedDateName;
+					selectedData.periodAmount = $(selection).find('input:text').val();
+					selectedData.periodSelect = $('#period-select').find(':selected').attr('id');
 				}
 
+				var p = '';
+				var workinglevel;
 				for (var i = 0, len = self.dataLevels.length; i < len; i++) {
-					if (self.dataLevels[i].analyzerDateFormat === analyzerDateFormat)
-						if(self.dataLevels[i].name != self.name) {
+					if (self.dataLevels[i].analyzerDateFormat === analyzerDateFormat) {
+						if (self.dataLevels[i].name === self.name) {
 							parentmembers = self.name;
+							workinglevel = self.dataLevels[i].name;
 						}
+						else {
+							workinglevel = self.dataLevels[i].name;
+						}
+					}
 				}
 
 				var logExp = {
 					dimension: self.dimension,
 					hierarchy: self.hierarchy,
-					level: parentmembers,
-					parent: '',
+					level: self.name,
+					parent: p,
 					AnalyzerDateFormat: analyzerDateFormat,
 					periodamount: periodamount,
 					comparisonOperator: comparisonOperator,
-					saikuDateProperty: self.saikuDateProperty
+					saikuDateProperty: self.saikuDateProperty,
+					workinglevel: workinglevel
 				};
 
 				mdx = self.populate_mdx(logExp, fixedDateName);
@@ -547,11 +654,15 @@ var DateFilterModal = Modal.extend({
 
 		var hName = decodeURIComponent(this.member.hierarchy),
 			lName = decodeURIComponent(this.member.level),
-			hierarchy = this.workspace.query.helper.getHierarchy(hName);
+			hierarchy = this.workspace.query.helper.getHierarchy(hName),
+			cubeSelected = decodeURIComponent($('.cubes option:selected').val()).split('/')[3];
 
-		var updates = [];
-
-		updates.push({ mdx: mdx });
+		selectedData.cube = cubeSelected;
+		selectedData.tab = Saiku.session.tabSelected;
+		selectedData.dim = this.dimension;
+		selectedData.hier = this.hierarchy;
+		selectedData.name = this.name;
+		this.set_storage(selectedData);
 
 		if (hierarchy && hierarchy.levels.hasOwnProperty(lName)) {
 			hierarchy.levels[lName] = { mdx: mdx, name: lName };
@@ -560,9 +671,60 @@ var DateFilterModal = Modal.extend({
 		this.finished();
 	},
 
+	set_storage: function(data) {
+		var self = this;
+		if (localStorage.getItem('dateFilter')) {
+			var arr = JSON.parse(localStorage.getItem('dateFilter')),
+				cubeSelected = decodeURIComponent($('.cubes option:selected').val()).split('/')[3],
+				tabSelected = Saiku.session.tabSelected,
+				dimension = this.dimension,
+				hierarchy = this.hierarchy;
+			_.find(arr, function(value, key, list) {
+				if (list[key].cube === cubeSelected && 
+					list[key].tab === tabSelected &&
+					list[key].dim === dimension &&
+					list[key].hier === hierarchy &&
+					list[key].name === self.name) {
+					arr[key] = data;
+					localStorage.setItem('dateFilter', JSON.stringify(arr));
+				}
+				else {
+					arr.push(data);
+					localStorage.setItem('dateFilter', JSON.stringify(arr));
+				}
+			});
+		}
+		else {
+			var arr = [];
+			arr.push(data);
+			localStorage.setItem('dateFilter', JSON.stringify(arr));
+		}
+	},
+
+	get_storage: function() {
+		var self = this,
+			data;
+		if (localStorage.getItem('dateFilter')) {
+			var arr = JSON.parse(localStorage.getItem('dateFilter')),
+				cubeSelected = decodeURIComponent($('.cubes option:selected').val()).split('/')[3],
+				tabSelected = Saiku.session.tabSelected,
+				dimension = this.dimension,
+				hierarchy = this.hierarchy;
+			_.find(arr, function(value, key, list) {
+				if (list[key].cube === cubeSelected && 
+					list[key].tab === tabSelected &&
+					list[key].dim === dimension &&
+					list[key].hier === hierarchy &&
+					list[key].name === self.name) {
+					data = list[key];
+				}
+			});
+		}
+		return data;
+	},
+
 	finished: function() {
-		this.$el.dialog('destroy');
-		this.$el.remove();
+		this.$el.dialog('destroy').remove();
 		this.query.run();
 	}
 });

@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,9 @@
 var Chart = Backbone.View.extend({
 
     initialize: function(args) {
-        
+
         this.workspace = args.workspace;
-        
+
         // Create a unique ID for use as the CSS selector
         this.id = _.uniqueId("chart_");
         $(this.el).attr({ id: this.id });
@@ -42,12 +42,13 @@ var Chart = Backbone.View.extend({
             $(self.el).find('.canvas_wrapper').hide();
             return false;
         });
-        
+
         this.workspace.bind('query:result', this.receive_data);
 
          var pseudoForm = "<div id='nav" + this.id + "' style='display:none' class='nav'><form id='svgChartPseudoForm' target='_blank' method='POST'>" +
                 "<input type='hidden' name='type' class='type'/>" +
                 "<input type='hidden' name='svg' class='svg'/>" +
+			 	"<input type='hidden' name='name' class='name'/>" +
                 "</form></div>";
         if (isIE) {
             pseudoForm = "<div></div>";
@@ -63,13 +64,17 @@ var Chart = Backbone.View.extend({
         var svgContent = new XMLSerializer().serializeToString($('svg')[0]);
         var rep = '<svg xmlns="http://www.w3.org/2000/svg" ';
         if (svgContent.substr(0,rep.length) != rep) {
-            svgContent = svgContent.replace('<svg ', rep);    
+            svgContent = svgContent.replace('<svg ', rep);
         }
         svgContent = '<!DOCTYPE svg [<!ENTITY nbsp "&#160;">]>' + svgContent;
-        
+
         var form = $('#svgChartPseudoForm');
         form.find('.type').val(type);
         form.find('.svg').val(svgContent);
+		if(this.workspace.query.name!=undefined) {
+			var f = this.workspace.query.name.substring(this.workspace.query.name.lastIndexOf('/') + 1).slice(0, -6);
+			form.find('.name').val(f);
+		}
         form.attr('action', Settings.REST_URL + this.workspace.query.url() + escape("/../../export/saiku/chart"));
         form.submit();
         return false;
@@ -80,17 +85,17 @@ var Chart = Backbone.View.extend({
         $(this.workspace.el).find('.workspace_results')
             .prepend($(this.el).hide());
     },
-    
+
     show: function(event, ui) {
         var self = this;
         this.workspace.adjust();
         this.renderer.cccOptions.width = $(this.workspace.el).find('.workspace_results').width() - 40;
         this.renderer.cccOptions.height = $(this.workspace.el).find('.workspace_results').height() - 40;
-        
+
         $(this.el).show();
 
         var hasRun = this.workspace.query.result.hasRun();
-        
+
         if (hasRun) {
             _.defer( function() {
                 self.renderer.process_data_tree({ data: self.workspace.query.result.lastresult() }, true, true);
@@ -106,7 +111,7 @@ var Chart = Backbone.View.extend({
     export_button: function(event) {
         var self = this;
         var $target = $(event.target).hasClass('button') ? $(event.target) : $(event.target).parent();
-        
+
         var self = this;
         var $body = $(document);
         //$body.off('.contextMenu .contextMenuAutoHide');
@@ -122,13 +127,12 @@ var Chart = Backbone.View.extend({
                 items: {
                     "png": {name: "PNG"},
                     "jpg": {name: "JPEG"},
-                    "pdf": {name: "PDF"},
-                    "svg": {name: "SVG"}
+                    "pdf": {name: "PDF"}
                 }
         });
         $target.contextMenu();
     },
-    
+
     receive_data: function(args) {
         if (! $(this.workspace.querytoolbar.el).find('.render_chart').hasClass('on')) {
             return;

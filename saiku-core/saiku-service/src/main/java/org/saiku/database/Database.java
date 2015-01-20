@@ -22,7 +22,6 @@ import org.saiku.service.importer.LegacyImporter;
 import org.saiku.service.importer.impl.LegacyImporterImpl;
 
 import org.h2.jdbcx.JdbcDataSource;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,70 +40,99 @@ import javax.servlet.ServletContext;
  */
 public class Database {
 
-  @Autowired
-  ServletContext servletContext;
-  private JdbcDataSource ds;
-  private static final Logger LOG = LoggerFactory.getLogger(Database.class);
+    @Autowired
+    ServletContext servletContext;
 
-  private IDatasourceManager dsm;
+    private JdbcDataSource ds;
+    private static final Logger log = LoggerFactory.getLogger(Database.class);
 
-  public Database() {
+    IDatasourceManager dsm;
+    public Database() {
 
-  }
+    }
 
-  public void setDatasourceManager(IDatasourceManager dsm) {
-    this.dsm = dsm;
-  }
+    public void setDatasourceManager(IDatasourceManager dsm) {
+        this.dsm = dsm;
+    }
 
-  public ServletContext getServletContext() {
-    return servletContext;
-  }
+    public ServletContext getServletContext() {
+        return servletContext;
+    }
 
-  public void setServletContext(ServletContext servletContext) {
-    this.servletContext = servletContext;
-  }
+    public void setServletContext(ServletContext servletContext) {
+        this.servletContext = servletContext;
+    }
 
-  public void init() throws SQLException {
-    initDB();
-    loadUsers();
-    loadFoodmart();
-    loadLegacyDatasources();
-  }
+    public void init() throws SQLException {
+        initDB();
+        loadUsers();
+        loadFoodmart();
+        loadLegacyDatasources();
+    }
 
-  private void initDB() {
-    String url = servletContext.getInitParameter("db.url");
-    String user = servletContext.getInitParameter("db.user");
-    String pword = servletContext.getInitParameter("db.password");
-    ds = new JdbcDataSource();
-    ds.setURL(url);
-    ds.setUser(user);
-    ds.setPassword(pword);
-  }
+    private void initDB() {
+        String url = servletContext.getInitParameter("db.url");
+        String user = servletContext.getInitParameter("db.user");
+        String pword = servletContext.getInitParameter("db.password");
+        ds = new JdbcDataSource();
+        ds.setURL(url);
+        ds.setUser(user);
+        ds.setPassword(pword);
+    }
 
-  private void loadFoodmart() throws SQLException {
-    String url = servletContext.getInitParameter("foodmart.url");
-    String user = servletContext.getInitParameter("foodmart.user");
-    String pword = servletContext.getInitParameter("foodmart.password");
-    if (url != null && !url.equals("${foodmart_url}")) {
-      JdbcDataSource ds2 = new JdbcDataSource();
-      ds2.setURL(url);
-      ds2.setUser(user);
-      ds2.setPassword(pword);
+    private void loadFoodmart() throws SQLException {
+        String url = servletContext.getInitParameter("foodmart.url");
+        String user = servletContext.getInitParameter("foodmart.user");
+        String pword = servletContext.getInitParameter("foodmart.password");
+        if(url!=null && !url.equals("${foodmart_url}")) {
+            JdbcDataSource ds2 = new JdbcDataSource();
+            ds2.setURL(dsm.getFoodmarturl());
+            ds2.setUser(user);
+            ds2.setPassword(pword);
 
-      Connection c = ds2.getConnection();
-      DatabaseMetaData dbm = c.getMetaData();
-      ResultSet tables = dbm.getTables(null, null, "account", null);
+            Connection c = ds2.getConnection();
+            DatabaseMetaData dbm = c.getMetaData();
+            ResultSet tables = dbm.getTables(null, null, "account", null);
 
-      if (!tables.next()) {
-        // Table exists
-        Statement statement = c.createStatement();
+            if (!tables.next()) {
+                // Table exists
+                Statement statement = c.createStatement();
 
-        statement.execute("RUNSCRIPT FROM '../../data/foodmart_h2.sql'");
-        String schema = null;
-        try {
-          schema = readFile("../../data/FoodMart4.xml");
-        } catch (IOException e) {
-          LOG.error("Can't read schema file", e);
+                statement.execute("RUNSCRIPT FROM '"+dsm.getFoodmartdir()+"/foodmart_h2.sql'");
+
+                statement.execute("alter table \"time_by_day\" add column \"date_string\" varchar(30);"
+                                  + "update \"time_by_day\" "
+                                  + "set \"date_string\" = TO_CHAR(\"the_date\", 'yyyy/mm/dd');");
+                String schema = null;
+                try {
+                    schema = readFile(dsm.getFoodmartschema(), StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    log.error("Can't read schema file",e);
+                }
+                try {
+                    dsm.addSchema(schema, "/datasources/foodmart4.xml", null);
+                } catch (Exception e) {
+                    log.error("Can't add schema file to repo", e);
+                }
+                Properties p = new Properties();
+                p.setProperty("driver", "mondrian.olap4j.MondrianOlap4jDriver");
+                p.setProperty("location", "jdbc:mondrian:Jdbc=jdbc:h2:"+dsm.getFoodmartdir()+"/foodmart;"+
+                "Catalog=mondrian:///datasources/foodmart4.xml;JdbcDrivers=org.h2.Driver");
+                p.setProperty("username", "sa");
+                p.setProperty("password", "");
+                p.setProperty("id", "4432dd20-fcae-11e3-a3ac-0800200c9a66");
+                SaikuDatasource ds = new SaikuDatasource("foodmart", SaikuDatasource.Type.OLAP, p);
+
+                try {
+                    dsm.addDatasource(ds);
+                } catch (Exception e) {
+                    log.error("Can't add data source to reop",e);
+                }
+            } else {
+                Statement statement = c.createStatement();
+
+                statement.executeQuery("select 1");
+            }
         }
         try {
           dsm.addSchema(schema, "/datasources/foodmart4.xml", null);

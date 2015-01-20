@@ -240,7 +240,6 @@
     <Dimension name='Time' table='time_by_day' type='TIME' key='Time Id'>
         <Attributes>
             <Attribute name='Year' keyColumn='the_year' levelType='TimeYears' hasHierarchy='false'>
-                <Annotations><Annotation name="AnalyzerDateFormat">[yyyy]</Annotation></Annotations>
             </Attribute>
             <Attribute name='Quarter' levelType='TimeQuarters' hasHierarchy='false'>
                 <Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[Qq]</Annotation></Annotations>
@@ -294,6 +293,7 @@
                 </Name>
             </Attribute>
             <Attribute name='Date' keyColumn='the_date' hasHierarchy='false'/>
+            <Attribute name='Date String' keyColumn='date_string' hasHierarchy='false'/>
             <Attribute name='Time Id' keyColumn='time_id' hasHierarchy='false'/>
         </Attributes>
 
@@ -301,26 +301,29 @@
             <Hierarchy name='Time' hasAll='false'>
                 <Level attribute='Year'>
                     <Annotations><Annotation name="AnalyzerDateFormat">[yyyy]</Annotation></Annotations>
-
                 </Level>
                 <Level attribute='Quarter'>
-<Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[Qq]</Annotation></Annotations>
-</Level>
+                    <Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[Qq]</Annotation></Annotations>
+                </Level>
                 <Level attribute='Month'>
-<Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[Qq].[mm]</Annotation></Annotations>
-</Level>
+                    <Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[Qq].[mm]</Annotation></Annotations>
+                </Level>
             </Hierarchy>
             <Hierarchy name='Weekly' hasAll='true'>
                 <Level attribute='Year'>
-<Annotations><Annotation name="AnalyzerDateFormat">[yyyy]</Annotation></Annotations>
-		</Level>
+                    <Annotations><Annotation name="AnalyzerDateFormat">[yyyy]</Annotation></Annotations>
+                </Level>
                 <Level attribute='Week'>
-<Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[ww]</Annotation></Annotations>
-</Level>
+                    <Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[ww]</Annotation></Annotations>
+                </Level>
                 <Level attribute='Day'>
-<Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[ww].[dd]</Annotation></Annotations>
-
-</Level>
+                    <Annotations><Annotation name="AnalyzerDateFormat">[yyyy].[ww].[dd]</Annotation></Annotations>
+                </Level>
+            </Hierarchy>
+            <Hierarchy name='Date Only' hasAll='true'>
+                <Level attribute='Date String'>
+                    <Annotations><Annotation name="SaikuDayFormatString">yyyy/mm/dd</Annotation></Annotations>
+                </Level>
             </Hierarchy>
         </Hierarchies>
     </Dimension>
@@ -598,7 +601,7 @@
         <CalculatedMembers>
             <CalculatedMember name='Profit' dimension='Measures'>
             <Formula>[Measures].[Store Sales] - [Measures].[Store Cost]</Formula>
-                <CalculatedMemberProperty name='FORMAT_STRING' value='$#,##0.00'/>
+                <CalculatedMemberProperty name="FORMAT_STRING" expression="Iif(([Measures].[Store Sales]) &lt; 10000, '|(#,##0.00 &#8364;)|style=red', '|#,##0.00 &#8364;|style=green')"/>
             </CalculatedMember>
             <CalculatedMember name='Profit last Period' dimension='Measures'
                     formula='COALESCEEMPTY((Measures.[Profit], [Time].[Time].PREVMEMBER),    Measures.[Profit])'

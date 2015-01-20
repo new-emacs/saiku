@@ -33,8 +33,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -267,17 +265,19 @@ public class ExcelWorksheetBuilder {
     cell.setCellValue("Filter Applied");
     row++;
 
-    for (ThinHierarchy item : queryFilters) {
-      for (ThinLevel s : item.getLevels().values()) {
-        for (ThinMember i : s.getSelection().getMembers()) {
-          sheetRow = summarySheet.createRow((short) row);
-          cell = sheetRow.createCell(0);
-          cell.setCellValue(item.getCaption());
-          cell = sheetRow.createCell(1);
-          cell.setCellValue(s.getCaption());
-          cell = sheetRow.createCell(2);
-          cell.setCellValue(i.getCaption());
-          row++;
+    if (queryFilters != null) {
+      for (ThinHierarchy item : queryFilters) {
+        for (ThinLevel s : item.getLevels().values()) {
+          for (ThinMember i : s.getSelection().getMembers()) {
+            sheetRow = summarySheet.createRow((short) row);
+            cell = sheetRow.createCell(0);
+            cell.setCellValue(item.getCaption());
+            cell = sheetRow.createCell(1);
+            cell.setCellValue(s.getCaption());
+            cell = sheetRow.createCell(2);
+            cell.setCellValue(i.getCaption());
+            row++;
+          }
         }
       }
     }

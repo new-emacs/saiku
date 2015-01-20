@@ -15,8 +15,6 @@
  */
 package org.saiku.datasources.connection;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.olap4j.OlapConnection;
 import org.olap4j.OlapWrapper;
 
@@ -93,22 +91,28 @@ public class SaikuOlapConnection implements ISaikuConnection {
       }
     }
 
-    Class.forName(driver);
-    Connection object = DriverManager.getConnection(url, username, password);
-    OlapConnection connection;
-    connection = (OlapConnection) DriverManager.getConnection(url, username, password);
-    final OlapWrapper wrapper = connection;
-    OlapConnection tmpolapConnection = wrapper.unwrap(OlapConnection.class);
+    Class.forName( driver );
+      Connection object = DriverManager.getConnection(url, username, password);
+    OlapConnection connection = null;
+      connection = (OlapConnection) DriverManager.getConnection(url, username, password);
 
 
-    if (tmpolapConnection == null) {
-      throw new Exception("Connection is null");
+    if(connection!=null) {
+      final OlapWrapper wrapper = connection;
+      OlapConnection tmpolapConnection = (OlapConnection) wrapper.unwrap(OlapConnection.class);
+
+
+      if (tmpolapConnection == null) {
+        throw new Exception("Connection is null");
+      }
+
+      System.out.println("Catalogs:" + tmpolapConnection.getOlapCatalogs().size());
+      olapConnection = tmpolapConnection;
+      initialized = true;
+      return true;
     }
 
-    System.out.println("Catalogs:" + tmpolapConnection.getOlapCatalogs().size());
-    olapConnection = tmpolapConnection;
-    initialized = true;
-    return true;
+    return false;
   }
 
   public boolean clearCache() throws Exception {

@@ -3,17 +3,18 @@
     <parent>
         <artifactId>saiku</artifactId>
         <groupId>org.saiku</groupId>
-        <version>3.1-SNAPSHOT</version>
+        <version>3.0.9-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>saiku-core</artifactId>
-    <packaging>pom</packaging>
-    <name>saiku - core libraries</name>
-    <version>3.1-SNAPSHOT</version>
-    <properties>
-        <maven.compiler.source>1.5</maven.compiler.source>
-        <maven.compiler.target>1.5</maven.compiler.target>
-        <spring.version>3.0.0.RELEASE</spring.version>
+
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>saiku-core</artifactId>
+	<packaging>pom</packaging>
+	<name>saiku - core libraries</name>
+       <version>3.0.9-SNAPSHOT</version>
+	<properties>
+		<maven.compiler.source>1.5</maven.compiler.source>
+		<maven.compiler.target>1.5</maven.compiler.target>
+    	<spring.version>3.0.0.RELEASE</spring.version>
         <slf4j.version>1.6.4</slf4j.version>
         <enunciate.version>1.28</enunciate.version>
         <jersey.version>1.11</jersey.version>

@@ -32,14 +32,15 @@ import org.olap4j.query.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-import mondrian.olap4j.MondrianOlap4jLevel;
+import mondrian.olap.Annotation;
+import mondrian.olap4j.LevelInterface;
+
 
 /**
  * ObjectUtil.
@@ -66,19 +67,13 @@ public class ObjectUtil {
 
   @NotNull
   public static SaikuDimension convert(@NotNull Dimension dim) {
-    SaikuDimension sDim = null;
-    try {
-      sDim = new SaikuDimension(
-          dim.getName(),
-          dim.getUniqueName(),
-          dim.getCaption(),
-          dim.getDescription(),
-          dim.isVisible(),
-          dim.getDimensionType(),
-          convertHierarchies(dim.getHierarchies()));
-    } catch (OlapException e) {
-      e.printStackTrace();
-    }
+    SaikuDimension sDim = new SaikuDimension(
+        dim.getName(),
+        dim.getUniqueName(),
+        dim.getCaption(),
+        dim.getDescription(),
+        dim.isVisible(),
+        convertHierarchies(dim.getHierarchies()));
     return sDim;
   }
 
@@ -145,17 +140,42 @@ public class ObjectUtil {
   @NotNull
   private static SaikuLevel convert(@NotNull Level level) {
     try {
-//List<SaikuMember> members = convertMembers(level.getMembers());
-      return new SaikuLevel(
-          level.getName(),
-          level.getUniqueName(),
-          level.getCaption(),
-          level.getDescription(),
-          level.getDimension().getUniqueName(),
-          level.getHierarchy().getUniqueName(),
-          level.isVisible(),
-          level.getLevelType(),
-          ((MondrianOlap4jLevel) level).getAnnotations());
+      try {
+        Class.forName("mondrian.olap4j.MondrianOlap4jLevelExtend");
+        Class<LevelInterface> _tempClass =
+            (Class<LevelInterface>) Class.forName("mondrian.olap4j.MondrianOlap4jLevelExtend");
+        Constructor<LevelInterface> ctor = _tempClass.getDeclaredConstructor(org.olap4j.metadata.Level.class);
+        LevelInterface test = ctor.newInstance(level);
+        HashMap<String, String> m = null;
+        if (test.getAnnotations() != null) {
+          m = new HashMap<String, String>();
+          for (Map.Entry<String, Annotation> entry : test.getAnnotations().entrySet()) {
+            m.put(entry.getKey(), (String) entry.getValue().getValue());
+          }
+        }
+        return new SaikuLevel(
+            test.getName(),
+            test.getUniqueName(),
+            test.getCaption(),
+            test.getDescription(),
+            test.getDimension().getUniqueName(),
+            test.getHierarchy().getUniqueName(),
+            test.isVisible(),
+            test.getLevelType().toString(),
+            m);
+      }
+      catch(ClassNotFoundException e){
+        return new SaikuLevel(
+            level.getName(),
+            level.getUniqueName(),
+            level.getCaption(),
+            level.getDescription(),
+            level.getDimension().getUniqueName(),
+            level.getHierarchy().getUniqueName(),
+            level.isVisible(),
+            null,null);
+      }
+
     } catch (Exception e) {
       throw new SaikuServiceException("Cannot convert level: " + level, e);
     }

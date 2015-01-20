@@ -20,9 +20,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-/**
- * ISessionService for Saiku Sessions.
- */
 public interface ISessionService {
 
   Map<String, Object> login(HttpServletRequest req,
@@ -33,7 +30,7 @@ public interface ISessionService {
   void authenticate(HttpServletRequest req, String username,
                     String password);
 
-  Map<String, Object> getSession();
+  public Map<String, Object> getSession() throws Exception;
 
   Map<String, Object> getAllSessionObjects();
 

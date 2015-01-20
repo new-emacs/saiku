@@ -21,25 +21,24 @@ import org.saiku.service.datasource.IDatasourceManager;
 import org.saiku.service.datasource.IDatasourceProcessor;
 import org.saiku.service.util.exception.SaikuServiceException;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.olap4j.OlapConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * AbstractConnectionManager.
- */
-public abstract class AbstractConnectionManager implements IConnectionManager {
+public abstract class AbstractConnectionManager implements IConnectionManager, Serializable {
 
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractConnectionManager.class);
-  private IDatasourceManager ds;
+  private static final long serialVersionUID = 4735617922513789022L;
+  private static final Logger log = LoggerFactory.getLogger(AbstractConnectionManager.class);
+  private transient IDatasourceManager ds;
 
   public void setDataSourceManager(IDatasourceManager ds) {
     this.ds = ds;
@@ -47,6 +46,16 @@ public abstract class AbstractConnectionManager implements IConnectionManager {
 
   public IDatasourceManager getDataSourceManager() {
     return ds;
+  }
+
+  private transient List<IDatasourceProcessor> dsProcessors;
+
+  public void setDataSourceProcessors(List<IDatasourceProcessor> processors){
+    this.dsProcessors = processors;
+  }
+
+  public List<IDatasourceProcessor> getDataSourceProcessors(){
+    return this.dsProcessors;
   }
 
   public abstract void init() throws SaikuOlapException;
@@ -206,5 +215,12 @@ public abstract class AbstractConnectionManager implements IConnectionManager {
       }
     }
     return false;
+  }
+
+  private void readObject(ObjectInputStream stream)
+      throws IOException, ClassNotFoundException {
+
+    stream.defaultReadObject();
+   // ds = (IDatasourceManager)ApplicationContextProvider.getApplicationContext().getBean("classpathDsManager");
   }
 }

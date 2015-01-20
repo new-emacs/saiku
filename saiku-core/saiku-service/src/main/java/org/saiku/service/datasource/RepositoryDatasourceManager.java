@@ -25,8 +25,6 @@ import org.saiku.service.importer.impl.LegacyImporterImpl;
 import org.saiku.service.user.UserService;
 import org.saiku.service.util.exception.SaikuServiceException;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,42 +38,54 @@ import javax.jcr.RepositoryException;
  * A Datasource Manager for the Saiku Repository API layer.
  */
 public class RepositoryDatasourceManager implements IDatasourceManager {
-  private final IRepositoryManager irm = JackRabbitRepositoryManager.getJackRabbitRepositoryManager();
-  private final Map<String, SaikuDatasource> datasources =
-      Collections.synchronizedMap(new HashMap<String, SaikuDatasource>());
-  private UserService userService;
-  private static final Logger LOG = LoggerFactory.getLogger(RepositoryDatasourceManager.class);
+    private Map<String, SaikuDatasource> datasources =
+            Collections.synchronizedMap(new HashMap<String, SaikuDatasource>());
+    private UserService userService;
+    private static final Logger log = LoggerFactory.getLogger(RepositoryDatasourceManager.class);
+    private String configurationpath;
+    private String datadir;
+    IRepositoryManager irm;
+    private String foodmartdir;
+    private String foodmartschema;
+    private String foodmarturl;
 
-  public void load() {
-    try {
-      irm.start(userService);
-    } catch (RepositoryException e) {
-      LOG.error("Could not start repo", e);
-    }
-    datasources.clear();
-    try {
+    public void load() {
+        irm = JackRabbitRepositoryManager.getJackRabbitRepositoryManager(configurationpath, datadir);
+        try {
+            irm.start(userService);
+        } catch (RepositoryException e) {
+            log.error("Could not start repo", e);
+        }
+        datasources.clear();
+        try {
 
-      List<DataSource> exporteddatasources = null;
-      try {
-        exporteddatasources = irm.getAllDataSources();
-      } catch (RepositoryException e1) {
-        LOG.error("Could not export data sources", e1);
-      }
+            List<DataSource> exporteddatasources = null;
+            try {
+                exporteddatasources = irm.getAllDataSources();
+            } catch (RepositoryException e1) {
+                log.error("Could not export data sources", e1);
+            }
 
-      if (exporteddatasources != null) {
-        for (DataSource file : exporteddatasources) {
-          if (file.getName() != null && file.getType() != null) {
-            Properties props = new Properties();
-            props.put("driver", file.getDriver());
-            props.put("location", file.getLocation());
-            props.put("username", file.getUsername());
-            props.put("password", file.getPassword());
-            props.put("path", file.getPath());
-            props.put("id", file.getId());
-            SaikuDatasource.Type t = SaikuDatasource.Type.valueOf(file.getType().toUpperCase());
-            SaikuDatasource ds = new SaikuDatasource(file.getName(), t, props);
-            datasources.put(file.getName(), ds);
-          }
+            if (exporteddatasources != null) {
+                for (DataSource file : exporteddatasources) {
+                    if (file.getName() != null && file.getType() != null) {
+                        Properties props = new Properties();
+                        props.put("driver", file.getDriver());
+                        props.put("location", file.getLocation());
+                        props.put("username", file.getUsername());
+                        props.put("password", file.getPassword());
+                        props.put("path", file.getPath());
+                        props.put("id", file.getId());
+                        SaikuDatasource.Type t = SaikuDatasource.Type.valueOf(file.getType().toUpperCase());
+                        SaikuDatasource ds = new SaikuDatasource(file.getName(), t, props);
+                        datasources.put(file.getName(), ds);
+                    }
+                }
+            }
+
+
+        } catch (Exception e) {
+            throw new SaikuServiceException(e.getMessage(), e);
         }
       }
 
@@ -121,12 +131,9 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
     return dsources;
   }
 
-  public boolean removeDatasource(String datasourceId) {
-    List<DataSource> ds = null;
-    try {
-      ds = irm.getAllDataSources();
-    } catch (RepositoryException e) {
-      LOG.error("Could not get all data sources");
+    public void addSchema(String file, String path, String name) throws Exception {
+            irm.saveInternalFile(file, path, "nt:mondrianschema");
+
     }
 
     if (ds != null) {
@@ -263,105 +270,48 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
     }
   }
 
-  public void removeInternalFile(String filePath) {
-    try {
-      irm.removeInternalFile(filePath);
-    } catch (RepositoryException e) {
-      LOG.error("Remove file failed: " + filePath);
-      e.printStackTrace();
+    public Object getRepository() {
+        return irm.getRepositoryObject();
     }
-  }
 
-  @Nullable
-  public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
-    return irm.getAllFiles(type, username, roles);
-  }
-
-  public void createUser(String username) {
-    try {
-      irm.createUser(username);
-    } catch (RepositoryException e) {
-      LOG.error("Create User Failed", e);
+    public void setConfigurationpath(String configurationpath) {
+        this.configurationpath = configurationpath;
     }
-  }
 
-  public void deleteFolder(String folder) {
-    try {
-      irm.deleteFolder(folder);
-    } catch (RepositoryException e) {
-      LOG.error("Delete User Failed", e);
+    public String getConfigurationpath() {
+        return configurationpath;
     }
-  }
 
-  public AclEntry getACL(String object, String username, List<String> roles) {
-    return irm.getACL(object, username, roles);
-  }
-
-  public void setACL(String object, String acl, String username, List<String> roles) {
-    try {
-      irm.setACL(object, acl, username, roles);
-    } catch (RepositoryException e) {
-      LOG.error("Set ACL Failed", e);
+    public void setDatadir(String datadir) {
+        this.datadir = datadir;
     }
-  }
 
-
-  public void setUserService(UserService userService) {
-    this.userService = userService;
-  }
-
-  @Nullable
-  public List<MondrianSchema> getInternalFilesOfFileType(String type) {
-    try {
-      return irm.getInternalFilesOfFileType(type);
-    } catch (RepositoryException e) {
-      LOG.error("Get internal file failed", e);
+    public String getDatadir() {
+        return datadir;
     }
-    return null;
-  }
 
-  public void createFileMixin(String type) throws RepositoryException {
-    irm.createFileMixin(type);
-  }
-
-  @Nullable
-  public byte[] exportRepository() {
-    try {
-      return irm.exportRepository();
-
-    } catch (RepositoryException e) {
-      LOG.error("could not export repository", e);
-    } catch (IOException e) {
-      LOG.error("could not export repository IO issue", e);
+    public void setFoodmartdir(String foodmartdir) {
+        this.foodmartdir = foodmartdir;
     }
-    return null;
-  }
 
-  public void restoreRepository(byte[] data) {
-    try {
-      irm.restoreRepository(data);
-    } catch (Exception e) {
-      LOG.error("Could not restore export", e);
+    public String getFoodmartdir() {
+        return foodmartdir;
     }
-  }
 
-  public boolean hasHomeDirectory(String name) {
-    try {
-      Node eturn = irm.getHomeFolder(name);
-      return eturn != null;
-    } catch (RepositoryException e) {
-      LOG.error("could not get home directory");
+    public void setFoodmartschema(String foodmartschema) {
+        this.foodmartschema = foodmartschema;
     }
-    return false;
-  }
 
-  public void restoreLegacyFiles(byte[] data) {
-    LegacyImporter l = new LegacyImporterImpl(null);
-    l.importLegacyReports(irm, data);
-  }
+    public String getFoodmartschema() {
+        return foodmartschema;
+    }
 
-  public Object getRepository() {
-    return irm.getRepositoryObject();
-  }
+    public void setFoodmarturl(String foodmarturl) {
+        this.foodmarturl = foodmarturl;
+    }
+
+    public String getFoodmarturl() {
+        return foodmarturl;
+    }
 }
 

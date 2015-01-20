@@ -10,6 +10,11 @@
         </bean>-->
     <bean id="repositoryDsManager" class="org.saiku.service.datasource.RepositoryDatasourceManager" init-method="load" destroy-method="unload">
         <property name="userService" ref="userServiceBean"/>
+        <property name="configurationpath" value="${repoconfig}"/>
+        <property name="datadir" value="${repodata}"/>
+        <property name="foodmartdir" value="${foodmartrepo}"/>
+        <property name="foodmartschema" value="${foodmartschema}"/>
+        <property name="foodmarturl" value="${foodmarturl}"/>
     </bean>
 
     <!-- <property name="path" value="file:///var/saiku/saiku-datasources/"/> -->
@@ -20,7 +25,7 @@
     <bean id="sessionService" class="org.saiku.web.service.SessionService">
         <property name="authenticationManager" ref="authenticationManager" />
     </bean>
-
+    <bean id="securityContextPersistenceFilter" class="org.springframework.security.web.context.SecurityContextPersistenceFilter" />
     <bean id="connectionManager" class="org.saiku.web.impl.SecurityAwareConnectionManager" init-method="init" destroy-method="destroy">
         <property name="dataSourceManager" ref="repositoryDsManager" />
         <property name="sessionService" ref="sessionService" />
@@ -85,7 +90,7 @@
     </bean>
 
     <bean id="platformBean" class="org.saiku.service.PlatformUtilsService">
-        <property name="path" value="../webapps/ROOT/js/saiku/plugins/"/>
+        <property name="path" value="${pluginpath}"/>
     </bean>
 
     <bean id="infoResource" class="org.saiku.web.rest.resources.InfoResource">

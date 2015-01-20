@@ -20,6 +20,7 @@ package org.saiku.repository;
 import org.saiku.database.dto.MondrianSchema;
 import org.saiku.datasources.connection.RepositoryFile;
 import org.saiku.service.user.UserService;
+import org.saiku.service.util.exception.SaikuServiceException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.api.JackrabbitRepository;
@@ -27,8 +28,6 @@ import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.core.RepositoryImpl;
 import org.apache.jackrabbit.core.config.RepositoryConfig;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,140 +54,156 @@ import javax.xml.bind.Unmarshaller;
  */
 public class JackRabbitRepositoryManager implements IRepositoryManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JackRabbitRepositoryManager.class);
-  private static JackRabbitRepositoryManager ref;
-  @Nullable
-  private Repository repository;
-  @Nullable
-  private Session session;
-  private Node root;
-  private UserService userService;
+    private static final Logger log = LoggerFactory.getLogger(JackRabbitRepositoryManager.class);
+    private static JackRabbitRepositoryManager ref;
+    private final String data;
+    private final String config;
+    private Repository repository;
+    private Session session;
+    private Node root;
+    private UserService userService;
 
-  private JackRabbitRepositoryManager() {
+    private JackRabbitRepositoryManager(String config, String data) {
 
-  }
-
-  /**
-   * TODO this is currently threadsafe but to improve performance we should split it up to allow multiple sessions to
-   * hit the repo at the same time.
-   */
-  public static synchronized JackRabbitRepositoryManager getJackRabbitRepositoryManager() {
-    if (ref == null) {
-      ref = new JackRabbitRepositoryManager();
+        this.config = config;
+        this.data = data;
     }
-    return ref;
-  }
 
-  @NotNull
-  public Object clone()
-      throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
-    // that'll teach 'em
-  }
-
-  public void init() {
-
-  }
-
-  void login() throws RepositoryException {
-    session = repository.login(
-        new SimpleCredentials("admin", "admin".toCharArray()));
-  }
-
-
-  public boolean start(UserService userService) throws RepositoryException {
-    this.userService = userService;
-    if (session == null) {
-      LOG.info("starting repo");
-      String xml = "../../repository/configuration.xml";
-      String dir = "../../repository/data";
-      RepositoryConfig config = RepositoryConfig.create(xml, dir);
-      repository = RepositoryImpl.create(config);
-      LOG.info("repo started");
-      LOG.info("logging in");
-      login();
-      LOG.info("logged in");
-      root = session.getRootNode();
-
-      root.getSession().save();
-      createFiles();
-      createFolders();
-      createNamespace();
-      createSchemas();
-      createDataSources();
-
-      Node n = JcrUtils.getOrAddFolder(root, "homes");
-      n.addMixin("nt:saikufolders");
-
-      Map<String, List<AclMethod>> m = new HashMap();
-      ArrayList l = new ArrayList();
-      l.add(AclMethod.READ);
-      m.put("ROLE_USER", l);
-      AclEntry e = new AclEntry("admin", AclType.SECURED, m, null);
-
-      Acl2 acl2 = new Acl2(n);
-      acl2.addEntry(n.getPath(), e);
-      acl2.serialize(n);
-
-      n = JcrUtils.getOrAddFolder(root, "datasources");
-      n.addMixin("nt:saikufolders");
-
-      n = JcrUtils.getOrAddFolder(root, "etc");
-      n.addMixin("nt:saikufolders");
-      n = JcrUtils.getOrAddFolder(n, "legacyreports");
-      n.addMixin("nt:saikufolders");
-
-      session.save();
-      LOG.info("node added");
+    /*
+     * TODO this is currently threadsafe but to improve performance we should split it up to allow multiple sessions to hit the repo at the same time.
+     */
+    public static synchronized JackRabbitRepositoryManager getJackRabbitRepositoryManager(String config, String data) {
+        if (ref == null)
+            // it's ok, we can call this constructor
+            ref = new JackRabbitRepositoryManager(config, data);
+        return ref;
     }
-    return true;
 
-  }
-
-  public void createUser(String u) throws RepositoryException {
-    login();
-    Node parent = JcrUtils.getNodeIfExists(root, "homes");
-    if (parent != null) {
-      Node node = parent.addNode("home:" + u, "nt:folder");
-      node.addMixin("nt:saikufolders");
-      //node.setProperty("type", "homedirectory");
-      //node.setProperty("user", u);
-      AclEntry e = new AclEntry(u, AclType.PRIVATE, null, null);
-
-      Acl2 acl2 = new Acl2(node);
-      acl2.addEntry(node.getPath(), e);
-      acl2.serialize(node);
-
-      node.getSession().save();
-
-    } else {
-      //TODO CANT CREATE DIRECTORY
+    public Object clone()
+            throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+        // that'll teach 'em
     }
-  }
 
-  public javax.jcr.NodeIterator getHomeFolders() throws RepositoryException {
-    //login();
-    Node homes = root.getNode("homes");
-    return homes.getNodes();
-  }
+    public void init() {
 
-  public Node getHomeFolder(String path) throws RepositoryException {
-    return root.getNode("homes").getNode("home:" + path);
-  }
-
-  public Node getFolder(String user, String directory) throws RepositoryException {
-    return getHomeFolder(user).getNode(directory);
-  }
-
-  Node getFolderNode(@NotNull String directory) throws RepositoryException {
-    if (directory.startsWith("/")) {
-      directory = directory.substring(1, directory.length());
     }
-    return root.getNode(directory);
-  }
 
-  public void shutdown() {
-    ((JackrabbitRepository) repository).shutdown();
+    public void login() throws RepositoryException {
+        session = repository.login(
+                new SimpleCredentials("admin", "admin".toCharArray()));
+    }
+
+
+    public boolean start(UserService userService) throws RepositoryException {
+        this.userService = userService;
+        if (session == null) {
+            log.info("starting repo");
+            String xml = config;
+            String dir = data;
+            RepositoryConfig config = RepositoryConfig.create(xml, dir);
+            repository = RepositoryImpl.create(config);
+            log.info("repo started");
+            log.info("logging in");
+            login();
+            log.info("logged in");
+            root = session.getRootNode();
+
+            root.getSession().save();
+            createFiles();
+            createFolders();
+            createNamespace();
+            createSchemas();
+            createDataSources();
+
+            Node n = JcrUtils.getOrAddFolder(root, "homes");
+            n.addMixin("nt:saikufolders");
+
+            HashMap<String, List<AclMethod>> m = new HashMap<String, List<AclMethod>>();
+            ArrayList<AclMethod> l = new ArrayList<AclMethod>();
+            l.add(AclMethod.READ);
+            m.put("ROLE_USER", l);
+            AclEntry e = new AclEntry("admin", AclType.SECURED, m, null);
+
+            Acl2 acl2 = new Acl2(n);
+            acl2.addEntry(n.getPath(), e);
+            acl2.serialize(n);
+
+            n = JcrUtils.getOrAddFolder(root, "datasources");
+            n.addMixin("nt:saikufolders");
+
+            m = new HashMap<String, List<AclMethod>>();
+            l = new ArrayList<AclMethod>();
+            l.add(AclMethod.WRITE);
+            l.add(AclMethod.READ);
+            l.add(AclMethod.GRANT);
+            m.put("ROLE_ADMIN", l);
+            e = new AclEntry("admin", AclType.PUBLIC, m, null);
+
+            acl2 = new Acl2(n);
+            acl2.addEntry(n.getPath(), e);
+            acl2.serialize(n);
+
+            n = JcrUtils.getOrAddFolder(root, "etc");
+            n.addMixin("nt:saikufolders");
+            n = JcrUtils.getOrAddFolder(n, "legacyreports");
+            n.addMixin("nt:saikufolders");
+
+            acl2 = new Acl2(n);
+            acl2.addEntry(n.getPath(), e);
+            acl2.serialize(n);
+
+            session.save();
+            log.info("node added");
+        }
+        return true;
+
+    }
+
+    public void createUser(String u) throws RepositoryException {
+        login();
+        Node parent = JcrUtils.getNodeIfExists(root, "homes");
+        if(parent != null) {
+            Node node = parent.addNode("home:" + u, "nt:folder");
+            node.addMixin("nt:saikufolders");
+            //node.setProperty("type", "homedirectory");
+            //node.setProperty("user", u);
+            AclEntry e = new AclEntry(u, AclType.PRIVATE, null, null);
+
+            Acl2 acl2 = new Acl2(node);
+            acl2.addEntry(node.getPath(), e);
+            acl2.serialize(node);
+
+            node.getSession().save();
+
+        }
+        else{
+            //TODO CANT CREATE DIRECTORY
+        }
+    }
+
+    public javax.jcr.NodeIterator getHomeFolders() throws RepositoryException {
+        //login();
+        Node homes = root.getNode("homes");
+        return homes.getNodes();
+    }
+
+    public Node getHomeFolder(String path) throws RepositoryException {
+        return root.getNode("homes").getNode("home:" + path);
+    }
+
+    public Node getFolder(String user, String directory) throws RepositoryException {
+        return getHomeFolder(user).getNode(directory);
+    }
+    public Node getFolderNode(String directory) throws RepositoryException {
+        if(directory.startsWith("/")){
+            directory = directory.substring(1, directory.length());
+        }
+        return root.getNode(directory);
+    }
+
+    public void shutdown() {
+        ((JackrabbitRepository)repository).shutdown();
       /*  String repositoryLocation = ((TransientRepository) repository).getHomeDir();
         try {
             FileUtils.deleteDirectory(new File(repositoryLocation));
@@ -229,78 +244,79 @@ public class JackRabbitRepositoryManager implements IRepositoryManager {
         } catch (RepositoryException e) {
             LOG.error("Could not remove folder: "+folder, e);
         }*/
-    Node node = JcrUtils.getNodeIfExists(root, folder);
-    if (node != null) {
-      node.remove();
-      node.getSession().save();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  public void deleteRepository() throws RepositoryException {
-    while (root.getNodes().hasNext()) {
-      root.getNodes().nextNode().remove();
-    }
-  }
-
-  public boolean moveFolder(String user, String folder, String source, @Nullable String target)
-      throws RepositoryException {
-    Node root = getHomeFolder(user).getNode(source + "/" + folder);
-
-    if (target == null) {
-      //session.getWorkspace().move(root.getPath(), root.getSession().getRootNode().getPath()+
-      // "/homes/home:"+user+"/"+folder);
-      root.getSession().move(root.getPath(), getHomeFolder(user).getPath() + "/" + root.getName());
-      root.getSession().save();
-    } else {
-      root.getSession().move(root.getPath(), getHomeFolder(user).getPath());
-      root.getSession().save();
+        Node node = JcrUtils.getNodeIfExists(root, folder);
+        if(node!=null) {
+            node.remove();
+            node.getSession().save();
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
-    return true;
-  }
+    public void deleteRepository() throws RepositoryException {
+        while (root.getNodes().hasNext()) {
+            root.getNodes().nextNode().remove();
+        }
+    }
 
-  public Node saveFile(@Nullable Object file, @NotNull String path, String user, @NotNull String type,
-                       @NotNull List<String> roles)
-      throws RepositoryException {
-    if (file == null) {
-      //Create new folder
-      String parent = path.substring(0, path.lastIndexOf("/"));
-      Node node = getFolder(parent);
-      Acl2 acl2 = new Acl2(node);
-      acl2.setAdminRoles(userService.getAdminRoles());
-      if (acl2.canWrite(node, user, roles)) {
-        //TODO Throw exception
-      }
+    public boolean moveFolder(String user, String folder, String source, String target) throws RepositoryException {
+        Node root = getHomeFolder(user).getNode(source + "/" + folder);
 
-      int pos = path.lastIndexOf("/");
-      String filename = "./" + path.substring(pos + 1, path.length());
-      Node resNode = node.addNode(filename, "nt:folder");
-      resNode.addMixin("nt:saikufolders");
-      return resNode;
+        if (target == null) {
+            //session.getWorkspace().move(root.getPath(), root.getSession().getRootNode().getPath()+"/homes/home:"+user+"/"+folder);
+            root.getSession().move(root.getPath(), getHomeFolder(user).getPath() + "/" + root.getName());
+            root.getSession().save();
+        } else {
+            root.getSession().move(root.getPath(), getHomeFolder(user).getPath());
+            root.getSession().save();
+        }
 
-    } else {
-      int pos = path.lastIndexOf("/");
-      String filename = "./" + path.substring(pos + 1, path.length());
-      Node n = getFolder(path.substring(0, pos));
-      Acl2 acl2 = new Acl2(n);
-      acl2.setAdminRoles(userService.getAdminRoles());
-      if (acl2.canWrite(n, user, roles)) {
-        //TODO Throw exception
-      }
+        return true;
+    }
 
+    public Node saveFile(Object file, String path, String user, String type, List<String> roles) throws RepositoryException {
+        if(file==null){
+            //Create new folder
+            String parent = path.substring(0, path.lastIndexOf("/"));
+            Node node = getFolder(parent);
+            Acl2 acl2 = new Acl2(node);
+            acl2.setAdminRoles(userService.getAdminRoles());
+            if (!acl2.canWrite(node, user, roles)) {
+                throw new SaikuServiceException("Can't write to file or folder");
+            }
 
-      Node resNode = n.addNode(filename, "nt:file");
-      if (type.equals("nt:saikufiles")) {
-        resNode.addMixin("nt:saikufiles");
-      } else if (type.equals("nt:mondrianschema")) {
-        resNode.addMixin("nt:mondrianschema");
-      } else if (type.equals("nt:olapdatasource")) {
-        resNode.addMixin("nt:olapdatasource");
-      }
-      Node contentNode = resNode.addNode("jcr:content", "nt:resource");
+            int pos = path.lastIndexOf("/");
+            String filename = "./" + path.substring(pos + 1, path.length());
+            Node resNode = node.addNode(filename, "nt:folder");
+            resNode.addMixin("nt:saikufolders");
+            return resNode;
+
+        }
+        else {
+            int pos = path.lastIndexOf("/");
+            String filename = "./" + path.substring(pos + 1, path.length());
+            Node n = getFolder(path.substring(0, pos));
+            Acl2 acl2 = new Acl2(n);
+            acl2.setAdminRoles(userService.getAdminRoles());
+            if (!acl2.canWrite(n, user, roles)) {
+                throw new SaikuServiceException("Can't write to file or folder");
+            }
+
+            Node check = JcrUtils.getNodeIfExists(n, filename);
+            if(check!=null){
+                check.remove();
+            }
+            Node resNode = n.addNode(filename, "nt:file");
+            if (type.equals("nt:saikufiles")) {
+                resNode.addMixin("nt:saikufiles");
+            } else if (type.equals("nt:mondrianschema")) {
+                resNode.addMixin("nt:mondrianschema");
+            } else if (type.equals("nt:olapdatasource")) {
+                resNode.addMixin("nt:olapdatasource");
+            }
+            Node contentNode = resNode.addNode("jcr:content", "nt:resource");
 
       //resNode.setProperty ("jcr:mimeType", "text/plain");
       //resNode.setProperty ("jcr:encoding", "utf8");
@@ -357,11 +373,26 @@ public class JackRabbitRepositoryManager implements IRepositoryManager {
       String parent = path.substring(0, path.lastIndexOf("/"));
       Node node = getFolder(parent);
 
-      int pos = path.lastIndexOf("/");
-      String filename = "./" + path.substring(pos + 1, path.length());
-      Node resNode = node.addNode(filename, "nt:folder");
-      resNode.addMixin("nt:saikufolders");
-      return resNode;
+            if(type == null){
+                type ="";
+            }
+            if(n.hasNode(filename)){
+                n.getNode(filename).remove();
+            }
+
+            Node resNode = n.addNode(filename, "nt:file");
+
+            if (type.equals("nt:saikufiles")) {
+                resNode.addMixin("nt:saikufiles");
+            } else if (type.equals("nt:mondrianschema")) {
+                resNode.addMixin("nt:mondrianschema");
+            } else if (type.equals("nt:olapdatasource")) {
+                resNode.addMixin("nt:olapdatasource");
+            }
+            else if(type!=null && !type.equals("") ){
+                resNode.addMixin(type);
+            }
+            Node contentNode = resNode.addNode("jcr:content", "nt:resource");
 
     } else {
       int pos = path.lastIndexOf("/");
@@ -456,7 +487,16 @@ public class JackRabbitRepositoryManager implements IRepositoryManager {
       LOG.error("Could not remove file " + datasourcePath, e);
     }
 
-  }
+    public void deleteFile(String datasourcePath) {
+        Node n;
+        try {
+            n = getFolder(datasourcePath);
+            n.remove();
+          n.getSession().save();
+
+        } catch (RepositoryException e) {
+            log.error("Could not remove file "+datasourcePath, e );
+        }
 
   @Nullable
   private AclEntry getAclObj(@NotNull String path) {
@@ -518,12 +558,14 @@ public class JackRabbitRepositoryManager implements IRepositoryManager {
     Acl2 acl2 = new Acl2(node);
     acl2.setAdminRoles(userService.getAdminRoles());
 
+
     if (acl2.canGrant(node, username, roles)) {
       if (node != null) {
         acl2.addEntry(object, ae);
         node = acl2.serialize(node);
       }
     }
+
 
     if (node != null) {
       node.getSession().save();

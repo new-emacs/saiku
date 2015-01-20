@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * Sets up workspace drop zones for DnD and other interaction
  */
@@ -23,25 +23,26 @@ var WorkspaceDropZone = Backbone.View.extend({
         var template = $("#template-workspace-dropzones").html() || "";
         return _.template(template)();
     },
-    
+
     events: {
         'sortstop .fields_list_body.details': 'set_measures',
         'sortstop .axis_fields': 'select_dimension',
         'click .d_measure' : 'remove_measure_click',
         'click .d_level': 'selections',
 //        'click .d_measure span.sort' : 'sort_measure',
+		'click .measure_fields.limit' : 'measure_action',
         'click .axis_fields_header.limit' : 'limit_axis',
         'click .clear_axis' : 'clear_axis'
     },
-    
+
     initialize: function(args) {
         // Keep track of parent workspace
         this.workspace = args.workspace;
-        
+
         // Maintain `this` in jQuery event handlers
         _.bindAll(this, "clear_axis");
     },
-    
+
     render: function() {
         var self = this;
         // Generate drop zones from template
@@ -50,7 +51,7 @@ var WorkspaceDropZone = Backbone.View.extend({
         // Activate drop zones
         $(this.el).find('.fields_list_body.details ul.connectable').sortable({
             items:          '> li',
-            opacity:        0.60,
+            opacityg:        0.60,
             placeholder:    'placeholder',
             tolerance:      'pointer',
             containment:    $(self.workspace.el),
@@ -76,8 +77,8 @@ var WorkspaceDropZone = Backbone.View.extend({
                     $(self.el).find('.axis_fields ul.hierarchy li.d_level:visible').addClass('temphide').hide();
             }
         });
-        
-        return this; 
+
+        return this;
     },
 
     set_measures: function(event, ui) {
@@ -116,7 +117,6 @@ var WorkspaceDropZone = Backbone.View.extend({
         }
     },
 
-    /*jshint -W083 */
     synchronize_query: function() {
         var self = this;
         this.reset_dropzones();
@@ -182,7 +182,7 @@ var WorkspaceDropZone = Backbone.View.extend({
 
 
     },
-    
+
     clear_axis: function(event) {
             var self = this;
             event.preventDefault();
@@ -192,7 +192,7 @@ var WorkspaceDropZone = Backbone.View.extend({
             } else {
                 this.workspace.query.helper.clearAxis(axis);
             }
-            
+
             this.workspace.sync_query();
             this.workspace.query.run();
             return false;
@@ -203,7 +203,7 @@ var WorkspaceDropZone = Backbone.View.extend({
     select_dimension: function(event, ui) {
         var self = this;
         // if we drop to remove dont execute the following
-        
+
         if ( false || $(ui.item).is(':visible')) {
             $(self.el).find('.axis_fields ul.hierarchy').each( function(index, element) {
                 $(element).find('li.temphide').show().removeClass('temphide');
@@ -226,7 +226,7 @@ var WorkspaceDropZone = Backbone.View.extend({
             } else {
                 self.workspace.query.helper.moveHierarchy(fromAxis, toAxis, hierarchy, indexHierarchy);
             }
-            
+
             $(ui.item).detach();
             this.workspace.sync_query();
             self.workspace.query.run();
@@ -235,15 +235,28 @@ var WorkspaceDropZone = Backbone.View.extend({
         return;
     },
 
-    find_type_time: function(dimension, hierarchy, level) {
-        var metadata = this.workspace.metadata.attributes.data,
-            value = {};
-        value.dimensions  = _.findWhere(metadata.dimensions, {name: dimension});
-        value.hierarchies = _.findWhere(value.dimensions.hierarchies, {name: hierarchy});
-        value.level      = _.findWhere(value.hierarchies.levels, {name: level});
-        return value;
-    },
-    
+	find_type_time: function (dimension, hierarchy, level) {
+        if (this.workspace.metadata === undefined) {
+            this.workspace.metadata = Saiku.session.sessionworkspace.cube[this.workspace.selected_cube];
+        }
+		var metadata = this.workspace.metadata.attributes.data,
+			value = {};
+		value.dimensions = _.findWhere(metadata.dimensions, {name: dimension});
+		if (hierarchy === undefined) {
+			hierarchy = dimension;
+		}
+		value.hierarchies = _.findWhere(value.dimensions.hierarchies, {name: hierarchy});
+
+		if (value.hierarchies === undefined || value.hierarchies === null) {
+			value.hierarchies = _.findWhere(value.dimensions.hierarchies, {name: dimension+"."+hierarchy});
+		}
+		value.level = _.findWhere(value.hierarchies.levels, {name: level});
+		if(value.level === null || value.level === undefined){
+			value.level = _.findWhere(value.hierarchies.levels, {caption: level});
+		}
+		return value;
+	},
+
     selections: function(event, ui) {
         if (event) {
             event.preventDefault();
@@ -258,7 +271,9 @@ var WorkspaceDropZone = Backbone.View.extend({
             objData = this.find_type_time(dimension, hierarchy, level),
             key = $target.attr('href').replace('#', '');
 
-        if (objData.level.annotations.AnalyzerDateFormat !== undefined) {
+        if (objData.level.annotations !== undefined &&
+            objData.level.annotations !== null &&
+			(objData.level.annotations.AnalyzerDateFormat !== undefined || objData.level.annotations.SaikuDayFormatString !== undefined)) {
             // Launch date filter dialog
             (new DateFilterModal({
                 AnalyzerDateFormat: objData.level.annotations.AnalyzerDateFormat,
@@ -280,25 +295,78 @@ var WorkspaceDropZone = Backbone.View.extend({
                 workspace: this.workspace
             })).open();
         }
-        
+
         return false;
     },
 
+
+	measure_action: function(event) {
+		var self = this;
+		if (typeof this.workspace.query == "undefined" || this.workspace.query.model.type != "QUERYMODEL" || Settings.MODE == "view") {
+			return false;
+		}
+		var $target = $(event.target).hasClass('limit') ? $(event.target) : $(event.target).parent();
+		var menuitems = {
+			"HEADER": {name: "Position", disabled:true, i18n: true },
+			"sep1": "---------",
+			"BOTTOM_COLUMNS": {name: "Columns | Measures", i18n: true },
+			"TOP_COLUMNS": {name: "Measures | Columns", i18n: true },
+			"BOTTOM_ROWS": {name: "Rows | Measures", i18n: true },
+			"TOP_ROWS": {name: "Measures | Rows", i18n: true },
+			"sep2": "---------",
+			"reset": {name: "Reset Default", i18n: true },
+			"cancel": {name: "Cancel", i18n: true }
+		};
+		$.each(menuitems, function(key, item){
+			recursive_menu_translate(item, Saiku.i18n.po_file);
+		});
+		$.contextMenu('destroy', '.limit');
+		$.contextMenu({
+			appendTo: $target,
+			selector: '.limit',
+			ignoreRightClick: true,
+			build: function($trigger, e) {
+				var query = self.workspace.query;
+				var cube = self.workspace.selected_cube;
+				return {
+					callback: function(key, options) {
+						var details = query.helper.model().queryModel.details;
+						if (key === "cancel") {
+							return;
+						}
+						if ( key === "reset") {
+							details.location = SaikuOlapQueryTemplate.queryModel.details.location;
+							details.axis = SaikuOlapQueryTemplate.queryModel.details.axis;
+						} else {
+							var location = key.split('_')[0];
+							var axis = key.split('_')[1];
+							details.location = location;
+							details.axis = axis;
+						}
+						query.run();
+					},
+					items: menuitems
+				}
+			}
+		});
+		$target.contextMenu();
+	},
+
     limit_axis: function(event) {
         var self = this;
-        
+
         if (typeof this.workspace.query == "undefined" || this.workspace.query.model.type != "QUERYMODEL" || Settings.MODE == "view") {
             return false;
         }
-        
+
         var $target =  $(event.target).hasClass('limit') ? $(event.target) : $(event.target).parent();
         var $axis = $target.siblings('.fields_list_body');
         var target = $axis.parent().attr('title');
-        
+
         $.contextMenu('destroy', '.limit');
         $.contextMenu({
             appendTo: $target,
-            selector: '.limit', 
+            selector: '.limit',
             ignoreRightClick: true,
              build: function($trigger, e) {
                 var query = self.workspace.query;
@@ -320,7 +388,7 @@ var WorkspaceDropZone = Backbone.View.extend({
                         if (filter.flavour == "Generic") {
                             filterCondition = filter.expressions[0];
                             isFilter = true;
-                        }                         
+                        }
                     });
                 }
                 if (a && a.sortOrder) {
@@ -351,8 +419,22 @@ var WorkspaceDropZone = Backbone.View.extend({
                         }
                     };
                 });
-
-
+var levels=[];
+				 _.each(a.hierarchies, function(hierarchy){
+					 for(var property in hierarchy.levels){
+						 console.log(property);
+						 var n ="";
+						 if(hierarchy.levels[property].caption!=null){
+							 n = hierarchy.levels[property].caption;
+						 }
+						 else{
+							 n = hierarchy.levels[property].name;
+						 }
+						 levels[hierarchy.levels[property].name] = {
+							 name: n
+						 }
+					 }
+				 });
                 var addFun = function(items, fun) {
                     var ret = {};
                     for (var key in items) {
@@ -373,12 +455,12 @@ var WorkspaceDropZone = Backbone.View.extend({
                 };
 
                 var citems = {
-                        "filter" : {name: "Filter", i18n: true, items: 
-                         { 
+                        "filter" : {name: "Filter", i18n: true, items:
+                         {
                                 "customfilter": {name: "Custom...", i18n: true },
                                 "clearfilter": {name: "Clear Filter", i18n: true }
                          }},
-                        "limit" : {name: "Limit", i18n: true, items: 
+                        "limit" : {name: "Limit", i18n: true, items:
                         {
                                 "TopCount###SEPARATOR###10": {name: "Top 10", i18n: true },
                                 "BottomCount###SEPARATOR###10": {name: "Bottom 10", i18n: true },
@@ -404,7 +486,11 @@ var WorkspaceDropZone = Backbone.View.extend({
                             "show_totals_max": {name: "Max", i18n: true},
                             "show_totals_avg": {name: "Avg", i18n: true}
                         }},
-
+						"parameters" : {name: "Parameters", i18n: true, items:
+				 		{
+					 		"ParamQuick": {name: "Add Parameter", i18n: true, items: addFun(levels, "Param")},
+							"ParamRemove": {name: "Remove Parameter", i18n: true, items: addFun(null, "Param")}
+				 		}},
                         "cancel" : { name: "Cancel", i18n: true }
 
                 };
@@ -422,12 +508,12 @@ var WorkspaceDropZone = Backbone.View.extend({
                 } else {
                     totalItems.show_totals_not.name = "<b>" + totalItems.show_totals_not.name + "</b";
                 }
-                
+
 
                 items["10"] = {
                    payload: { "n" : 10 }
                 };
-                
+
                 if (isFilter) {
                     var f = citems.filter;
                     f.name = "<b>" + f.name + "</b>";
@@ -437,15 +523,15 @@ var WorkspaceDropZone = Backbone.View.extend({
                     var s = citems.sort.items;
                     citems.sort.name = "<b>" + citems.sort.name + "</b>";
                     if (sortHl in s) {
-                        s[sortHl].name = "<b>" + s[sortHl].name + "</b>";    
+                        s[sortHl].name = "<b>" + s[sortHl].name + "</b>";
                     }
                 }
                 if (isTop) {
                     var t = citems.limit.items;
                     citems.limit.name = "<b>" + citems.limit.name + "</b>";
                     if (topHl in t) {
-                        t[topHl].name = "<b>" + t[topHl].name + "</b>";    
-                    }   
+                        t[topHl].name = "<b>" + t[topHl].name + "</b>";
+                    }
                 }
 
                 return {
@@ -468,9 +554,9 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     expressions.push(filterCondition);
 
                                     self.workspace.query.helper.removeFilter(a, 'Generic');
-                                    a.filters.push( 
-                                        {   "flavour" : "Generic", 
-                                            "operator": null, 
+                                    a.filters.push(
+                                        {   "flavour" : "Generic",
+                                            "operator": null,
                                             "function" : "Filter",
                                             "expressions": expressions
                                         });
@@ -478,9 +564,9 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     self.workspace.query.run();
                                 };
 
-                                 (new FilterModal({ 
+                                 (new FilterModal({
                                     axis: target,
-                                    success: save_custom, 
+                                    success: save_custom,
                                     query: self.workspace.query,
                                     expression: filterCondition,
                                     expressionType: "Filter"
@@ -501,9 +587,9 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     }
 
                                     self.workspace.query.helper.removeFilter(a, 'N');
-                                    a.filters.push( 
-                                        {   "flavour" : "N", 
-                                            "operator": null, 
+                                    a.filters.push(
+                                        {   "flavour" : "N",
+                                            "operator": null,
                                             "function" : fun,
                                             "expressions": expressions
                                         });
@@ -511,10 +597,10 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     self.workspace.query.run();
                                 };
 
-                                 (new CustomFilterModal({ 
+                                 (new CustomFilterModal({
                                     axis: target,
                                     measures: measures,
-                                    success: save_custom, 
+                                    success: save_custom,
                                     query: self.workspace.query,
                                     func: func,
                                     n: n,
@@ -529,9 +615,9 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     self.workspace.query.run();
                                 };
 
-                                 (new FilterModal({ 
+                                 (new FilterModal({
                                     axis: target,
-                                    success: save_customsort, 
+                                    success: save_customsort,
                                     query: self.workspace.query,
                                     expression: sortOrderLiteral,
                                     expressionType: "Order"
@@ -558,7 +644,11 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     a.sortOrder = fun;
                                     a.sortEvaluationLiteral = items[ikey].payload.sortliteral;
 
-                                } else {
+                                }
+								else if(_.indexOf(["Param"], fun) > -1) {
+									console.log("here");
+									a.sortEvaluationLiteral = items[ikey].payload.sortliteral;
+								}else {
                                     var expressions = [];
                                     expressions.push(items[ikey].payload.n);
                                     var sl = items[ikey].payload.sortliteral;
@@ -567,9 +657,9 @@ var WorkspaceDropZone = Backbone.View.extend({
                                     }
 
                                     self.workspace.query.helper.removeFilter(a, 'N');
-                                    a.filters.push( 
-                                        {   "flavour" : "N", 
-                                            "operator": null, 
+                                    a.filters.push(
+                                        {   "flavour" : "N",
+                                            "operator": null,
                                             "function" : fun,
                                             "expressions": expressions
                                         });
@@ -579,7 +669,7 @@ var WorkspaceDropZone = Backbone.View.extend({
                             }
                     },
                     items: citems
-                }; 
+                };
             }
         });
     $target.contextMenu();

@@ -48,8 +48,6 @@ import org.saiku.service.util.export.CsvExporter;
 import org.saiku.service.util.export.ExcelExporter;
 
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.olap4j.*;
 import org.olap4j.mdx.ParseTreeNode;
 import org.olap4j.mdx.ParseTreeWriter;
@@ -68,6 +66,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import mondrian.olap4j.SaikuMondrianHelper;
+
+public class ThinQueryService implements Serializable {
 
 import mondrian.olap4j.SaikuMondrianHelper;
 
@@ -493,111 +495,94 @@ public class ThinQueryService implements Serializable {
       }
     }
 
-  }
-
-  public byte[] exportResultSetCsv(ResultSet rs) {
-    return CsvExporter.exportCsv(rs);
-  }
-
-  public byte[] exportResultSetCsv(ResultSet rs, String delimiter, String enclosing, boolean printHeader,
-                                   List<KeyValue<String, String>> additionalColumns) {
-    return CsvExporter.exportCsv(rs, delimiter, enclosing, printHeader, additionalColumns);
-  }
-
-
-  @Nullable
-  public List<SimpleCubeElement> getResultMetadataMembers(
-      String queryName,
-      boolean preferResult,
-      String hierarchyName,
-      String levelName,
-      String searchString,
-      int searchLimit) {
-
-    if (context.containsKey(queryName)) {
-      CellSet cs = context.get(queryName).getOlapResult();
-      List<SimpleCubeElement> members = new ArrayList<SimpleCubeElement>();
-      Set<Level> levels = new HashSet<Level>();
-      boolean search = StringUtils.isNotBlank(searchString);
-      preferResult = preferResult && !search;
-      searchString = search ? searchString.toLowerCase() : null;
-
-      if (cs != null && preferResult) {
-        for (CellSetAxis axis : cs.getAxes()) {
-          int posIndex = 0;
-          for (Hierarchy h : axis.getAxisMetaData().getHierarchies()) {
-            if (h.getUniqueName().equals(hierarchyName) || h.getName().equals(hierarchyName)) {
-              LOG.debug("Found hierarchy in the result: " + hierarchyName);
-              if (h.getLevels().size() == 1) {
-                break;
-              }
-              Set<Member> mset = new HashSet<Member>();
-              for (Position pos : axis.getPositions()) {
-                Member m = pos.getMembers().get(posIndex);
-                if (!m.getLevel().getLevelType().equals(org.olap4j.metadata.Level.Type.ALL)) {
-                  levels.add(m.getLevel());
+    public ResultSet drillthrough(String queryName, List<Integer> cellPosition, Integer maxrows, String returns) {
+        OlapStatement stmt = null;
+        try {
+            QueryContext queryContext = context.get(queryName);
+            ThinQuery query = queryContext.getOlapQuery();
+            CellSet cs = queryContext.getOlapResult();
+            SaikuCube cube = query.getCube();
+            final OlapConnection con = olapDiscoverService.getNativeConnection(cube.getConnection());
+            stmt = con.createStatement();
+            SelectNode sn = (new DefaultMdxParserImpl().parseSelect(query.getMdx()));
+            String select = null;
+            StringBuffer buf = new StringBuffer();
+            if (sn.getWithList() != null && sn.getWithList().size() > 0) {
+                buf.append("WITH \n");
+                StringWriter sw = new StringWriter();
+                ParseTreeWriter ptw = new ParseTreeWriter(sw);
+                final PrintWriter pw = ptw.getPrintWriter();
+                for (ParseTreeNode with : sn.getWithList()) {
+                    with.unparse(ptw);
+                    pw.println();
                 }
-                if (m.getLevel().getUniqueName().equals(levelName) || m.getLevel().getName().equals(levelName)) {
-                  mset.add(m);
-                }
-              }
-
-              members = ObjectUtil.convert2Simple(mset);
-              Collections.sort(members, new SaikuUniqueNameComparator());
-
-              break;
+                buf.append(sw.toString());
             }
-            posIndex++;
-          }
+            buf.append("SELECT (");
+            for (int i = 0; i < cellPosition.size(); i++) {
+                List<Member> members = cs.getAxes().get(i).getPositions().get(cellPosition.get(i)).getMembers();
+                for (int k = 0; k < members.size(); k++) {
+                    Member m = members.get(k);
+                    if (k > 0 || i > 0) {
+                        buf.append(", ");
+                    }
+                    buf.append(m.getUniqueName());
+                }
+            }
+            buf.append(") ON COLUMNS \r\n");
+            buf.append("FROM [" + cube.getName() + "]\r\n");
+            final Writer writer = new StringWriter();
+            sn.getFilterAxis().unparse(new ParseTreeWriter(new PrintWriter(writer)));
+            if (StringUtils.isNotBlank(writer.toString())) {
+                buf.append("WHERE " + writer.toString());
+            }
+            select = buf.toString();
+            if (maxrows > 0) {
+                select = "DRILLTHROUGH MAXROWS " + maxrows + " " + select + "\r\n";
+            }
+            else {
+                select = "DRILLTHROUGH " + select + "\r\n";
+            }
+            if (StringUtils.isNotBlank(returns)) {
+                select += "\r\n RETURN " + returns;
+            }
+            log.debug("Drill Through for query (" + queryName + ") : \r\n" + select);
+            ResultSet rs = stmt.executeQuery(select);
+            return rs;
+        } catch (Exception e) {
+            throw new SaikuServiceException("Error DRILLTHROUGH: " + queryName,e);
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+            } catch (Exception e) {}
         }
-        LOG.debug("Found members in the result: " + members.size());
-
-      }
-      if (cs == null || !preferResult || members.size() == 0 || levels.size() == 1) {
-        members = olapDiscoverService
-            .getLevelMembers(context.get(queryName).getOlapQuery().getCube(), hierarchyName, levelName, searchString,
-                searchLimit);
-      }
-      return members;
     }
-    return null;
-  }
 
-  private void calculateTotals(@NotNull ThinQuery tq, @NotNull CellDataSet result, @NotNull CellSet cellSet,
-                               ICellSetFormatter formatter)
-      throws Exception {
-    if (ThinQuery.Type.QUERYMODEL.equals(tq.getType()) && formatter instanceof FlattenedCellSetFormatter) {
-      Cube cub = olapDiscoverService.getNativeCube(tq.getCube());
-      Query query = Fat.convert(tq, cub);
 
-      QueryDetails details = query.getDetails();
-      Measure[] selectedMeasures = new Measure[details.getMeasures().size()];
-      for (int i = 0; i < selectedMeasures.length; i++) {
-        selectedMeasures[i] = details.getMeasures().get(i);
-      }
-      result.setSelectedMeasures(selectedMeasures);
 
-      int rowsIndex = 0;
-      if (!cellSet.getAxes().get(0).getAxisOrdinal().equals(Axis.ROWS)) {
-        rowsIndex = rowsIndex + 1 & 1;
-      }
-      // TODO - refactor this using axis ordinals etc.
-      //@formatter:off
-      final AxisInfo[] axisInfos = new AxisInfo[] { new AxisInfo(cellSet.getAxes().get(rowsIndex)),
-        new AxisInfo(cellSet.getAxes().get(rowsIndex + 1 & 1)) };
-      //@formatter:on
-      List<TotalNode>[][] totals = new List[2][];
-      TotalsListsBuilder builder = null;
-      for (int index = 0; index < 2; index++) {
-        final int second = index + 1 & 1;
-        TotalAggregator[] aggregators = new TotalAggregator[axisInfos[second].maxDepth + 1];
-        for (int i = 1; i < aggregators.length - 1; i++) {
-          List<String> aggs = query.getAggregators(axisInfos[second].uniqueLevelNames.get(i - 1));
-          String totalFunctionName = aggs != null && aggs.size() > 0 ? aggs.get(0) : null;
-          aggregators[i] =
-              StringUtils.isNotBlank(totalFunctionName)
-              ? TotalAggregator.newInstanceByFunctionName(totalFunctionName)
-              : null;
+    public byte[] exportDrillthroughCsv(String queryName, int maxrows) {
+        OlapStatement stmt = null;
+        try {
+            QueryContext queryContext = context.get(queryName);
+            ThinQuery query = queryContext.getOlapQuery();
+            final OlapConnection con = olapDiscoverService.getNativeConnection(query.getCube().getConnection());
+            stmt = con.createStatement();
+            String mdx = query.getMdx();
+            if (maxrows > 0) {
+                mdx = "DRILLTHROUGH MAXROWS " + maxrows + " " + mdx;
+            }
+            else {
+                mdx = "DRILLTHROUGH " + mdx;
+            }
+
+            ResultSet rs = stmt.executeQuery(mdx);
+            return CsvExporter.exportCsv(rs);
+        } catch (SQLException e) {
+            throw new SaikuServiceException("Error DRILLTHROUGH: " + queryName,e);
+        } finally {
+            try {
+                if (stmt != null)  stmt.close();
+            } catch (Exception e) {}
         }
         List<String> aggs = query.getAggregators(axisInfos[second].axis.getAxisOrdinal().name());
         String totalFunctionName = aggs != null && aggs.size() > 0 ? aggs.get(0) : null;

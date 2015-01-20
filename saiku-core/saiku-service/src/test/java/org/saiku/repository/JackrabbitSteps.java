@@ -17,8 +17,6 @@ package org.saiku.repository;
 
 import net.thucydides.core.annotations.Step;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,7 +34,8 @@ import javax.jcr.RepositoryException;
  */
 public class JackrabbitSteps {
 
-  private final IRepositoryManager iRepositoryManager = JackRabbitRepositoryManager.getJackRabbitRepositoryManager();
+  private IRepositoryManager iRepositoryManager = JackRabbitRepositoryManager.getJackRabbitRepositoryManager(null,
+      null);
 
 
   @Step
@@ -106,7 +105,7 @@ public class JackrabbitSteps {
 
   @Step
   public void shutdownRepository() {
-    JackRabbitRepositoryManager.getJackRabbitRepositoryManager().shutdown();
+      JackRabbitRepositoryManager.getJackRabbitRepositoryManager(null,null).shutdown();
   }
 
   @Step

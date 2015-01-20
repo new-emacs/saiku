@@ -1,23 +1,26 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.saiku</groupId>
     <artifactId>saiku</artifactId>
     <packaging>pom</packaging>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.0.9-SNAPSHOT</version>
     <name>Saiku Module Project</name>
     <scm>
         <developerConnection>
             scm:git:https://github.com/OSBI/saiku.git
         </developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>3.0.2-SNAPSHOT</tag>
+    </scm>
     <modules>
         <module>saiku-core</module>
         <module>saiku-ui</module>
         <module>saiku-webapp</module>
+<!--        <module>saiku-web-tests</module>-->
         <module>saiku-server</module>
         <module>saiku-bi-platform-plugin-p5</module>
+        <module>saiku-bi-platform-plugin</module>
     </modules>
     <distributionManagement>
         <repository>
@@ -79,11 +82,6 @@
         </repository>
 
         <repository>
-            <id>pentaho-repo</id>
-            <name>pentaho repository</name>
-            <url>http://repository.pentaho.org/artifactory/pentaho</url>
-        </repository>
-        <repository>
             <id>Analytical Labs Repo</id>
             <name>Analytical Labs Repo-releases</name>
             <url>http://repo.analytical-labs.com/artifactory/alabs-release-local</url>
@@ -107,7 +105,19 @@
             <name>Apache repo</name>
             <layout>default</layout>
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
-            <snapshots><enabled>true</enabled></snapshots>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>atlassian</id>
+            <name>Atlassian Public</name>
+            <layout>default</layout>
+            <url>https://maven.atlassian.com/content/repositories/atlassian-public</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
     <build>
@@ -134,6 +144,15 @@
             <!--     </executions> -->
             <!-- </plugin> -->
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>0.11</version>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
@@ -152,41 +171,6 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.1</version>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>build-helper-maven-plugin</artifactId>-->
-                <!--&lt;!&ndash; Make sure every sub-project has LICENSE, NOTICE and-->
-                <!--git.properties in its jar's META-INF directory. &ndash;&gt;-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>add-resource</id>-->
-                        <!--<phase>generate-resources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>add-resource</goal>-->
-                            <!--<goal>add-test-resource</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<resources>-->
-                                <!--<resource>-->
-                                    <!--<directory>${top.dir}</directory>-->
-                                    <!--<targetPath>META-INF</targetPath>-->
-                                    <!--<includes>-->
-                                        <!--<include>LICENSE</include>-->
-                                        <!--<include>NOTICE</include>-->
-                                    <!--</includes>-->
-                                <!--</resource>-->
-                                <!--<resource>-->
-                                    <!--<directory>${top.dir}/target</directory>-->
-                                    <!--<targetPath>META-INF</targetPath>-->
-                                    <!--<includes>-->
-                                        <!--<include>git.properties</include>-->
-                                    <!--</includes>-->
-                                <!--</resource>-->
-                            <!--</resources>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -221,14 +205,14 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.3</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.3</version>
                 </plugin>
                 <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -272,64 +256,115 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
-
+        <!--<dependency>
+            <groupId>net.serenity-bdd</groupId>
+            <artifactId>core</artifactId>
+            <version>1.0.23</version>
+        </dependency>
+        <dependency>
+            <groupId>net.serenity-bdd</groupId>
+            <artifactId>serenity-jbehave</artifactId>
+            <version>1.0.10</version>
+        </dependency>-->
     </dependencies>
     <dependencyManagement>
         <dependencies>
- <dependency>
-<groupId>net.sourceforge.jtds</groupId>
-<artifactId>jtds</artifactId>
-<version>1.3.1</version>
-</dependency>
-<dependency>
-<groupId>org.postgresql</groupId>
-<artifactId>postgresql</artifactId>
-<version>9.3-1102-jdbc41</version>
-</dependency>
-<dependency>
-<groupId>org.apache.hive</groupId>
-<artifactId>hive-jdbc</artifactId>
-<version>0.13.1</version>
-</dependency>
-<dependency>
-<groupId>org.springframework.security</groupId>
-<artifactId>spring-security-cas</artifactId>
-<version>${spring.security.version}</version>
-</dependency>
-	<dependency>
-<groupId>org.jasig.cas.client</groupId>
-<artifactId>cas-client-core</artifactId>
-<version>3.3.2</version>
-</dependency>
-<dependency>
-<groupId>org.jasig.cas.client</groupId>
-<artifactId>cas-client-integration-tomcat-common</artifactId>
-<version>3.3.2</version>
-</dependency>
-<dependency>
-<groupId>org.jasig.cas.client</groupId>
-<artifactId>cas-client-integration-tomcat-v7</artifactId>
-<version>3.3.2</version>
-</dependency>
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>itextpdf</artifactId>
- <version>5.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.itextpdf.tool</groupId>
-            <artifactId>xmlworker</artifactId>
- <version>5.5.0</version>
-        </dependency>
- <dependency>
-<groupId>rhino</groupId>
-<artifactId>js</artifactId>
-<version>1.7R2</version>
-</dependency>
+           <!-- <dependency>
+                <groupId>net.serenity-bdd</groupId>
+                <artifactId>core</artifactId>
+                <version>1.0.10</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.serenity-bdd</groupId>
+                <artifactId>serenity-jbehave</artifactId>
+                <version>1.0.10</version>
+                <scope>test</scope>
+
+            </dependency>-->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>2.0.0-20141212.210914-782</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.jersey.jersey-test-framework</groupId>
+                <artifactId>jersey-test-framework-core</artifactId>
+                <version>${jersey.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.jersey.jersey-test-framework</groupId>
+                <artifactId>jersey-test-framework-external</artifactId>
+                <version>${jersey.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.jtds</groupId>
+                <artifactId>jtds</artifactId>
+                <version>1.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>9.3-1102-jdbc41</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-jdbc</artifactId>
+                <version>0.13.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-cas</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jasig.cas.client</groupId>
+                <artifactId>cas-client-core</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jasig.cas.client</groupId>
+                <artifactId>cas-client-integration-tomcat-common</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jasig.cas.client</groupId>
+                <artifactId>cas-client-integration-tomcat-v7</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>rhino</groupId>
+                <artifactId>js</artifactId>
+                <version>1.7R2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-api</artifactId>
+                <version>2.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-webdav</artifactId>
+                <version>2.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.jackrabbit</groupId>
+                <artifactId>jackrabbit-jcr-commons</artifactId>
+                <version>2.8.0</version>
+            </dependency>
             <dependency>
                 <groupId>org.saiku</groupId>
                 <artifactId>saiku-service</artifactId>
-                <version>3.1-SNAPSHOT</version>
+                <version>3.0.9-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.saiku</groupId>
+                <artifactId>saiku-webapp</artifactId>
+                <version>3.0.9-SNAPSHOT</version>
+                <type>war</type>
             </dependency>
             <!---<dependency>
                 <groupId>org.slf4j</groupId>
@@ -402,6 +437,58 @@
                 <version>2.0</version>
             </dependency>
             <dependency>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+                <version>1.3.04</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>fop</artifactId>
+                <version>1.1</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>avalon-framework-api</artifactId>
+                        <groupId>org.apache.avalon.framework</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>avalon-framework-impl</artifactId>
+                        <groupId>org.apache.avalon.framework</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>xmlgraphics-commons</artifactId>
+                <version>1.5</version>
+            </dependency>
+
+            <!-- these two are to correct issues in fop dependency -->
+            <dependency>
+                <groupId>avalon-framework</groupId>
+                <artifactId>avalon-framework-api</artifactId>
+                <version>4.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>avalon-framework</groupId>
+                <artifactId>avalon-framework-impl</artifactId>
+                <version>4.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-js</artifactId>
+                <version>1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>batik</groupId>
+                <artifactId>batik-transcoder</artifactId>
+                <version>1.7</version>
+            </dependency>
+            <dependency>
+                <groupId>batik</groupId>
+                <artifactId>batik-ext</artifactId>
+                <version>1.7</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.jackrabbit</groupId>
                 <artifactId>jackrabbit-core</artifactId>
                 <version>2.8.0</version>
@@ -424,7 +511,27 @@
             <dependency>
                 <groupId>net.thucydides</groupId>
                 <artifactId>thucydides-jbehave-plugin</artifactId>
-                <version>0.9.229</version>
+                <version>0.9.268</version>
+            </dependency>
+            <dependency>
+                <groupId>net.thucydides</groupId>
+                <artifactId>thucydides-core</artifactId>
+                <version>0.9.268</version>
+            </dependency>
+            <dependency>
+                <groupId>net.thucydides</groupId>
+                <artifactId>thucydides-junit</artifactId>
+                <version>0.9.268</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.javax.persistence</groupId>
+                <artifactId>hibernate-jpa-2.1-api</artifactId>
+                <version>1.0.0.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jbehave</groupId>
+                <artifactId>jbehave-core</artifactId>
+                <version>3.8</version>
             </dependency>
             <dependency>
                 <groupId>mondrian-data-foodmart-hsql</groupId>
@@ -446,7 +553,11 @@
                 <artifactId>spring-tx</artifactId>
                 <version>${spring.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>net.sourceforge.htmlcleaner</groupId>
+                <artifactId>htmlcleaner</artifactId>
+                <version>2.10</version>
+            </dependency>
             <dependency>
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-annotations</artifactId>
@@ -470,7 +581,7 @@
             <dependency>
                 <groupId>org.saiku</groupId>
                 <artifactId>saiku-web</artifactId>
-                <version>3.1-SNAPSHOT</version>
+                <version>3.0.9-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
@@ -489,24 +600,35 @@
                 <version>1.7</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-bridge</artifactId>
+                <version>1.7</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.xmlgraphics</groupId>
+                <artifactId>batik-svg-dom</artifactId>
+                <version>1.7</version>
+            </dependency>
+            <!--<dependency>
                 <groupId>avalon-framework</groupId>
                 <artifactId>avalon-framework</artifactId>
-                <version>4.1.5</version>
-            </dependency>
+                <version>4.2.0</version>
+            </dependency>-->
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>xmlgraphics-commons</artifactId>
                 <version>1.2</version>
             </dependency>
             <dependency>
-                <groupId>com.lowagie</groupId>
-                <artifactId>itext</artifactId>
+                <groupId>iText</groupId>
+                <artifactId>iText</artifactId>
                 <version>4.2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.saiku</groupId>
                 <artifactId>saiku-ui</artifactId>
-                <version>3.1-SNAPSHOT</version>
+                <version>3.0.9-SNAPSHOT</version>
                 <type>war</type>
             </dependency>
             <dependency>
@@ -570,11 +692,11 @@
                 <artifactId>spring-webmvc</artifactId>
                 <version>${spring.version}</version>
             </dependency>
-	   <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${spring.version}</version>
-	    </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -589,6 +711,11 @@
             <dependency>
                 <groupId>com.sun.jersey</groupId>
                 <artifactId>jersey-core</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-servlet</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
             <dependency>
@@ -868,9 +995,20 @@
                 <version>${spring.security.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>jstl</artifactId>
                 <version>1.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>2.4</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -883,6 +1021,11 @@
                 <version>20020423</version>
             </dependency>
             <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-core-asl</artifactId>
+                <version>1.9.3</version>
+            </dependency>
+            <dependency>
                 <groupId>javax.servlet.jsp</groupId>
                 <artifactId>jsp-api</artifactId>
                 <version>2.1</version>
@@ -892,6 +1035,12 @@
                 <artifactId>h2</artifactId>
                 <version>1.4.177</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.3-alpha1</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.calcite</groupId>
                 <artifactId>calcite-core</artifactId>
@@ -913,7 +1062,18 @@
                 <artifactId>clover</artifactId>
                 <version>4.0.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.atlassian.jira</groupId>
+                <artifactId>jira-rest-java-client-api</artifactId>
+                <version>2.0.0-m29</version>
+            </dependency>
+            <dependency>
+                <groupId>com.atlassian.jira</groupId>
+                <artifactId>jira-rest-java-client-core</artifactId>
+                <version>2.0.0-m29</version>
+            </dependency>
         </dependencies>
+
     </dependencyManagement>
 
 </project>

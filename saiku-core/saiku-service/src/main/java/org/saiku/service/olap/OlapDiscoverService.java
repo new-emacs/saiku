@@ -21,11 +21,11 @@ import org.saiku.olap.util.exception.SaikuOlapException;
 import org.saiku.service.datasource.DatasourceService;
 import org.saiku.service.util.exception.SaikuServiceException;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.olap4j.OlapConnection;
 import org.olap4j.metadata.Cube;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,9 +34,6 @@ import java.util.Map;
 
 import mondrian.rolap.RolapConnection;
 
-/**
- * OlapDiscoverService.
- */
 public class OlapDiscoverService implements Serializable {
 
   /**
@@ -45,7 +42,7 @@ public class OlapDiscoverService implements Serializable {
   private static final long serialVersionUID = 884682532600907574L;
 
   private DatasourceService datasourceService;
-  private OlapMetaExplorer metaExplorer;
+  private transient OlapMetaExplorer metaExplorer;
 
   public void setDatasourceService(@NotNull DatasourceService ds) {
     datasourceService = ds;
@@ -245,5 +242,11 @@ public class OlapDiscoverService implements Serializable {
       throw new SaikuServiceException(e);
     }
     return properties;
+  }
+
+  private void readObject(ObjectInputStream stream)
+      throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();
+    metaExplorer = new OlapMetaExplorer( datasourceService.getConnectionManager() );
   }
 }

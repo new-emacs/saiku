@@ -19,8 +19,6 @@ import org.saiku.olap.util.SaikuProperties;
 import org.saiku.service.olap.totals.aggregators.TotalAggregator;
 
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.olap4j.*;
 import org.olap4j.metadata.Cube;
 import org.olap4j.metadata.Measure;
@@ -133,30 +131,39 @@ public class TotalsListsBuilder implements FormatList {
     memberBranch = new Member[dataAxisInfo.maxDepth + 1];
   }
 
-  private Format getMeasureFormat(@NotNull Measure m) {
+
+  private Format getMeasureFormat(Measure m) {
     try {
       String formatString = (String) m.getPropertyValue(Property.StandardCellProperty.FORMAT_STRING);
       if (StringUtils.isBlank(formatString)) {
-        Map<String, Property> props = m.getProperties().asMap();
-        if (props.containsKey("FORMAT_STRING")) {
-          formatString = (String) m.getPropertyValue(props.get("FORMAT_STRING"));
-        } else if (props.containsKey("FORMAT_EXP")) {
-          formatString = (String) m.getPropertyValue(props.get("FORMAT_EXP"));
-        } else if (props.containsKey("FORMAT")) {
-          formatString = (String) m.getPropertyValue(props.get("FORMAT"));
+        if(m.getProperties()!=null) {
+          Map<String, Property> props = m.getProperties().asMap();
+          if (props.containsKey("FORMAT_STRING")) {
+            formatString = (String) m.getPropertyValue(props.get("FORMAT_STRING"));
+          } else if (props.containsKey("FORMAT_EXP_PARSED")) {
+            formatString = (String) m.getPropertyValue(props.get("FORMAT_EXP_PARSED"));
+          } else if (props.containsKey("FORMAT_EXP")) {
+            formatString = (String) m.getPropertyValue(props.get("FORMAT_EXP"));
+          } else if (props.containsKey("FORMAT")) {
+            formatString = (String) m.getPropertyValue(props.get("FORMAT"));
+          }
+        }
+        if (StringUtils.isBlank(formatString)) {
+          formatString = "Standard";
+        }
+        if (StringUtils.isNotBlank(formatString) && formatString.length() > 1 && formatString.startsWith("\"") && formatString.endsWith("\"")) {
+          formatString = formatString.substring(1, formatString.length() - 1);
         }
       }
-      return Format.get(formatString, SaikuProperties.LOCALE);
+      return Format.get(formatString, SaikuProperties.locale);
     } catch (OlapException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void positionMember(final int depth, Member m, @NotNull final List<Integer> levels, final Member[] branch) {
-    //@formatter:off
-    for (int i = levels.size() - 1; i >= 0;) {
-      //@formatter:on
-      branch[depth + i] = m;
+  private void positionMember( final int depth, Member m, final List<Integer> levels, final Member[] branch ) {
+    for ( int i = levels.size() - 1; i >= 0; ) {
+      branch[ depth + i ] = m;
       i--;
       do {
         m = m != null ? m.getParentMember() : null;
