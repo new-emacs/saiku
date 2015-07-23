@@ -1,22 +1,28 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>saiku</artifactId>
+        <groupId>org.saiku</groupId>
+        <version>3.3.1</version>
+    </parent>
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.saiku</groupId>
 	<artifactId>saiku-bi-platform-plugin-p5</artifactId>
 	<packaging>jar</packaging>
-	<version>3.0.1-SNAPSHOT</version>
+	<version>3.3.1</version>
 	<name>saiku biserver plugin</name>
 
-	<properties>
-		<maven.compiler.source>1.5</maven.compiler.source>
-		<maven.compiler.target>1.5</maven.compiler.target>
-		<pentaho.libs.version>TRUNK-SNAPSHOT</pentaho.libs.version>
-		<pentaho.platform.version>5.0.0</pentaho.platform.version>
-		<slf4j.version>1.6.1</slf4j.version>
-		<enunciate.version>1.28</enunciate.version>
-		<jersey.version>1.11</jersey.version>
-	</properties>
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/plugin</directory>
+				<targetPath>${basedir}/target/dist/saiku</targetPath>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.js</include>
+
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -31,34 +37,19 @@
 						<configuration>
 							<artifactItems>
                                 <artifactItem>
-                                    <groupId>com.itextpdf</groupId>
-                                    <artifactId>itextpdf</artifactId>
-                                    <version>5.5.0</version>
-                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.itextpdf.tool</groupId>
-                                    <artifactId>xmlworker</artifactId>
-                                    <version>5.5.0</version>
-                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>rhino</groupId>
-                                    <artifactId>js</artifactId>
-                                    <version>1.7R2</version>
+                                    <groupId>org.mozilla</groupId>
+                                    <artifactId>rhino</artifactId>
                                     <outputDirectory>target/dist/saiku/lib</outputDirectory>
                                 </artifactItem>
 								<artifactItem>
 									<groupId>org.saiku</groupId>
 									<artifactId>saiku-ui</artifactId>
-									<version>${project.version}</version>
 									<type>war</type>
 									<outputDirectory>target/stage</outputDirectory>
 								</artifactItem>
                                 <artifactItem>
                                     <groupId>org.saiku</groupId>
                                     <artifactId>saiku-web</artifactId>
-                                    <version>${project.version}</version>
                                     <type>jar</type>
                                     <classifier>sources</classifier>
                                     <outputDirectory>target/dist/saiku/lib</outputDirectory>
@@ -66,106 +57,187 @@
 								<artifactItem>
 									<groupId>org.saiku</groupId>
 									<artifactId>saiku-service</artifactId>
-									<version>${project.version}</version>
 									<type>jar</type>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.saiku</groupId>
 									<artifactId>saiku-web</artifactId>
-									<version>${project.version}</version>
 									<type>jar</type>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.saiku</groupId>
 									<artifactId>saiku-olap-util</artifactId>
-									<version>${project.version}</version>
 									<type>jar</type>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.saiku</groupId>
 									<artifactId>saiku-query</artifactId>
-									<version>0.1-SNAPSHOT</version>
 									<type>jar</type>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 
 								<artifactItem>
-									<groupId>org.jvnet</groupId>
+                                        <groupId>org.jvnet.mimepull</groupId>
   									<artifactId>mimepull</artifactId>
-  									<version>1.6</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>pentaho</groupId>
 									<artifactId>mondrian</artifactId>
-									<version>4.0.0-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
-								<artifactItem>
+								<!--<artifactItem>
 									<groupId>org.olap4j</groupId>
 									<artifactId>olap4j-xmla</artifactId>
-									<version>1.2.0-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.olap4j</groupId>
 									<artifactId>olap4j</artifactId>
-									<version>1.2.0-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
-								</artifactItem>
+								</artifactItem>-->
 								<artifactItem>
 									<groupId>eigenbase</groupId>
 									<artifactId>eigenbase-properties</artifactId>
-									<version>1.1.0.10924</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>eigenbase</groupId>
 									<artifactId>eigenbase-resgen</artifactId>
-									<version>1.3.0.11873</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 
 								</artifactItem>
 								<artifactItem>
 									<groupId>eigenbase</groupId>
 									<artifactId>eigenbase-xom</artifactId>
-									<version>1.3.0.11999</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>commons-lang</groupId>
 									<artifactId>commons-lang</artifactId>
-									<version>2.4</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.jdom</groupId>
 									<artifactId>jdom</artifactId>
-									<version>1.1</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>pentaho</groupId>
 									<artifactId>cda</artifactId>
-									<version>TRUNK-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>pentaho</groupId>
 									<artifactId>cpf-core</artifactId>
-									<version>REFACTOR-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>pentaho</groupId>
 									<artifactId>cpf-pentaho5</artifactId>
-									<version>REFACTOR-SNAPSHOT</version>
 									<outputDirectory>target/dist/saiku/lib</outputDirectory>
 								</artifactItem>
-							</artifactItems>
+								<!-- Batik/SVG -->
+								<artifactItem>
+									<groupId>org.apache.xmlgraphics</groupId>
+									<artifactId>batik-transcoder</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.xmlgraphics</groupId>
+									<artifactId>batik-codec</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+                                <!--<artifactItem>
+                                    <groupId>batik</groupId>
+                                    <artifactId>batik-ext</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>-->
+                                <artifactItem>
+                                    <groupId>org.apache.xmlgraphics</groupId>
+                                    <artifactId>batik-svg-dom</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.xmlgraphics</groupId>
+                                    <artifactId>batik-bridge</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.fasterxml.jackson.core</groupId>
+                                    <artifactId>jackson-databind</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.fasterxml.jackson.core</groupId>
+                                    <artifactId>jackson-core</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                                    <artifactId>jackson-jaxrs-json-provider</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.fasterxml.jackson.jaxrs</groupId>
+                                    <artifactId>jackson-jaxrs-base</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.fasterxml.jackson.core</groupId>
+                                    <artifactId>jackson-annotations</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.xmlgraphics</groupId>
+                                    <artifactId>batik-script</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+								<!--<artifactItem>
+									<groupId>avalon-framework</groupId>
+									<artifactId>avalon-framework</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>-->
+								<artifactItem>
+									<groupId>org.apache.xmlgraphics</groupId>
+									<artifactId>xmlgraphics-commons</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>iText</groupId>
+									<artifactId>iText</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.mozilla</groupId>
+									<artifactId>rhino</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.pdfbox</groupId>
+									<artifactId>pdfbox</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.xmlgraphics</groupId>
+									<artifactId>fop</artifactId>
+									<outputDirectory>target/dist/saiku/lib</outputDirectory>
+								</artifactItem>
+                                <artifactItem>
+                                    <groupId>net.sourceforge.htmlcleaner</groupId>
+                                    <artifactId>htmlcleaner</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.pdfbox</groupId>
+                                    <artifactId>fontbox</artifactId>
+                                    <outputDirectory>target/dist/saiku/lib</outputDirectory>
+                                </artifactItem>
+
+                            </artifactItems>
 						</configuration>
 					</execution>
 				</executions>
@@ -175,6 +247,24 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>1.0b3</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>ant</groupId>
+                                <artifactId>ant</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant-nodeps</artifactId>
+                        <version>1.8.1</version>
+                    </dependency>
+                </dependencies>
 				<executions>
 					<execution>
 						<id>copy-package</id>
@@ -189,18 +279,20 @@
 										<include name="saiku-ui-${project.version}.war" />
 									</fileset>
 								</unzip>
-								<copy
-									file="${basedir}/target/${project.artifactId}-${project.version}.jar"
-									todir="target/dist/saiku/lib" />
+								<copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" todir="target/dist/saiku/lib" />
 								<copy todir="target/dist/saiku/" overwrite="true">
-									<fileset dir="${basedir}/src/main/plugin/" />
+									<fileset dir="${basedir}/src/main/plugin/">
+										<include name="**/*.xml" />
+										<exclude name="**/version.xml" />
+									</fileset>
 								</copy>
-								<copy todir="target/dist/saiku/ui/" overwrite="true">
+                                <mkdir dir="target/dist/saiku/saiku-repository" />
+                                <copy todir="target/dist/saiku/ui/" overwrite="true">
 									<fileset dir="${basedir}/src/main/plugin/">
 										<include name="*.properties" />
 									</fileset>
 								</copy>
-                                <patch patchfile="newpatch.patch" originalfile="target/dist/saiku/ui/index.html"/>
+                                <patch patchfile="addplugins.patch" originalfile="target/dist/saiku/ui/index.html" failonerror="true" />
 								<zip destfile="target/saiku-plugin-p5-${project.version}.zip">
 									<zipfileset dir="target/dist/" />
 								</zip>
@@ -235,7 +327,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<executions>
+                <version>2.10.1</version>
+                <executions>
 					<execution>
 						<id>attach-javadocs</id>
 						<!-- Restrict execution of source compilation to install -->
@@ -252,54 +345,61 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>pentaho-repo</id>
-			<name>pentaho repository</name>
-			<url>http://repository.pentaho.org/artifactory/pentaho</url>
+			<id>Analytical Labs Repo</id>
+			<name>Analytical Labs Repo-releases</name>
+			<url>http://repo.meteorite.bi/content/repositories/alabs-release-local/</url>
+		</repository>
+		<repository>
+			<id>Analytical Labs snapshots</id>
+			<name>Analytical Labs Repo-releases</name>
+			<url>http://repo.meteorite.bi/content/repositories/alabs-snapshot-local/</url>
 		</repository>
 		<repository>
 			<id>pentaho-third-party</id>
-			<url>http://repo.pentaho.org/artifactory/third-party/</url>
-		</repository>
-                <repository>
-			<id>alabs-repo</id>
-			<name>alabs repository</name>
-			<url>http://repo.analytical-labs.com/repo/</url>
+			<url>http://nexus.pentaho.org/content/repositories/proxied-3rd-party-releases/</url>
 		</repository>
 		<repository>
-			<id>ibiblio</id>
-			<url>http://ibiblio.org/maven2/</url>
+			<id>pentaho-public-release</id>
+			<url>http://nexus.pentaho.org/content/repositories/pentaho-public-release-repos/</url>
+		</repository>
+		<repository>
+			<id>pentaho-snapshot</id>
+			<url>http://nexus.pentaho.org/content/repositories/public-snapshots/</url>
+		</repository>
+
+		<repository>
+			<id>central</id>
+			<name>Maven Repository Switchboard</name>
+			<layout>default</layout>
+			<url>http://repo1.maven.org/maven2</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
 		<repository>
-			<id>java</id>
-			<url>http://download.java.net/maven/2/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
+			<id>apache</id>
+			<name>Apache repo</name>
+			<layout>default</layout>
+			<url>https://repository.apache.org/content/repositories/snapshots/</url>
+			<snapshots><enabled>true</enabled></snapshots>
 		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.saiku</groupId>
 			<artifactId>saiku-service</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.saiku</groupId>
 			<artifactId>saiku-web</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.saiku</groupId>
 			<artifactId>saiku-olap-util</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>cpf-core</artifactId>
-			<version>REFACTOR-SNAPSHOT</version>
 			<exclusions>
 			<exclusion>
 					<groupId>janino</groupId>
@@ -310,7 +410,6 @@
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>cpf-pentaho5</artifactId>
-			<version>REFACTOR-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>pentaho</groupId>
@@ -331,6 +430,14 @@
 				
 			</exclusions>
 		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
 <!-- 
 		<dependency>
 			<groupId>pentaho</groupId>
@@ -346,57 +453,44 @@
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>mondrian</artifactId>
-<<<<<<< HEAD
-			<version>3.6.1</version>
-=======
-			<version>4.0.0-SNAPSHOT</version>
->>>>>>> c699d5d... plugin changes
+            <version>3.6.7</version>
 		</dependency>
 		<dependency>
 			<groupId>eigenbase</groupId>
 			<artifactId>eigenbase-properties</artifactId>
-			<version>1.1.0.10924</version>
 		</dependency>
 		<dependency>
 			<groupId>eigenbase</groupId>
 			<artifactId>eigenbase-resgen</artifactId>
-			<version>1.3.0.11873</version>
 		</dependency>
 		<dependency>
 			<groupId>eigenbase</groupId>
 			<artifactId>eigenbase-xom</artifactId>
-			<version>1.3.0.11999</version>
 		</dependency>
 		<dependency>
 			<groupId>org.olap4j</groupId>
 			<artifactId>olap4j-xmla</artifactId>
-			<version>1.2.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>${slf4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-			<version>1.2.14</version>
 		</dependency>
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>pentaho-platform-api</artifactId>
-			<version>${pentaho.platform.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>pentaho-platform-core</artifactId>
-			<version>${pentaho.platform.version}</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -448,7 +542,6 @@
 		<dependency>
 			<groupId>pentaho</groupId>
 			<artifactId>pentaho-platform-extensions</artifactId>
-			<version>${pentaho.platform.version}</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -492,32 +585,26 @@
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-core</artifactId>
-			<version>${jersey.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
-			<version>${jersey.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey.contribs</groupId>
 			<artifactId>jersey-multipart</artifactId>
-			<version>${jersey.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.jvnet</groupId>
-  			<artifactId>mimepull</artifactId>
-  			<version>1.6</version>
-  		</dependency>
-		<dependency>
+        <dependency>
+            <groupId>org.jvnet.mimepull</groupId>
+            <artifactId>mimepull</artifactId>
+        </dependency>
+        <dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-servlet</artifactId>
-			<version>${jersey.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey.contribs</groupId>
 			<artifactId>jersey-spring</artifactId>
-			<version>${jersey.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.springframework</groupId>
@@ -541,21 +628,124 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-base</artifactId>
+            <version>2.5.1</version>
+        </dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-client</artifactId>
-			<version>${jersey.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.4</version>
+			<artifactId>javax.servlet-api</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-core</artifactId>
-			<version>2.0.5.RELEASE</version>
+            <version>2.0.5.RELEASE</version>
 		</dependency>
 
+		<!-- Batik/SVG -->
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-transcoder</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-codec</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+		</dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>fontbox</artifactId>
+        </dependency>
+       <!-- <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-ext</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>-->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-svg-dom</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-bridge</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-script</artifactId>
+            <version>1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-js</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>xmlgraphics-commons</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>iText</groupId>
+			<artifactId>iText</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mozilla</groupId>
+			<artifactId>rhino</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>fop</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>net.sourceforge.htmlcleaner</groupId>
+            <artifactId>htmlcleaner</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
 	</dependencies>
 </project>

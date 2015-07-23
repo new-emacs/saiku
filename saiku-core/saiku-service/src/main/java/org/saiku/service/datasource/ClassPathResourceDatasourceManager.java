@@ -15,29 +15,23 @@
  */
 package org.saiku.service.datasource;
 
-import org.apache.commons.vfs.FileObject;
-import org.apache.commons.vfs.FileSystemManager;
-import org.apache.commons.vfs.VFS;
 import org.saiku.database.dto.MondrianSchema;
 import org.saiku.datasources.connection.RepositoryFile;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.datasources.datasource.SaikuDatasource.Type;
+import org.saiku.repository.AclEntry;
 import org.saiku.repository.IRepositoryObject;
 import org.saiku.service.user.UserService;
 import org.saiku.service.util.exception.SaikuServiceException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import org.apache.commons.vfs.FileObject;
+import org.apache.commons.vfs.FileSystemManager;
+import org.apache.commons.vfs.VFS;
+
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import org.saiku.repository.AclEntry;
+import java.util.*;
 
 import javax.jcr.RepositoryException;
 
@@ -211,7 +205,11 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
         return null;
     }
 
-    public RepositoryFile getFile2(String file) {
+  public String saveFile(String path, Object content, String user, List<String> roles) {
+    return null;
+  }
+
+  public RepositoryFile getFile2(String file) {
         return null;
     }
 
@@ -231,11 +229,15 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
         return null;
     }
 
-    public String saveInternalFile(String path, String content, String type) {
+    public String saveInternalFile(String path, Object content, String type) {
         return null;
     }
 
-    public String saveInternalFile(String path, String content) {
+  public String saveBinaryInternalFile(String path, InputStream content, String type) {
+    return null;
+  }
+
+  public String saveInternalFile(String path, String content) {
         return null;
     }
     
@@ -247,7 +249,11 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
         return null;
     }
 
-    public javax.jcr.Node getFiles() {
+  public List<IRepositoryObject> getFiles(String type, String username, List<String> roles, String path) {
+    return null;
+  }
+
+  public javax.jcr.Node getFiles() {
         return null;
     }
 
@@ -296,7 +302,38 @@ public class ClassPathResourceDatasourceManager implements IDatasourceManager {
 
     }
 
-    public String saveFile(String path, String content, String user) {
+  public String getFoodmartschema() {
+    return null;
+  }
+
+  public void setFoodmartschema(String schema) {
+
+  }
+
+  public void setFoodmartdir(String dir) {
+
+  }
+
+  public String getFoodmartdir() {
+    return null;
+  }
+
+  public String getDatadir() {
+    return null;
+  }
+
+  public void setDatadir(String dir) {
+  }
+
+  public void setFoodmarturl(String foodmarturl) {
+
+  }
+
+  public String getFoodmarturl() {
+    return null;
+  }
+
+  public String saveFile(String path, String content, String user) {
         return null;
     }
 }

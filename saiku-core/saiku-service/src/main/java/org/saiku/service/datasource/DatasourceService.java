@@ -15,26 +15,26 @@
 */
 package org.saiku.service.datasource;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
 import org.saiku.database.dto.MondrianSchema;
 import org.saiku.datasources.connection.IConnectionManager;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.repository.AclEntry;
 import org.saiku.repository.IRepositoryObject;
-import org.saiku.service.importer.LegacyImporter;
-import org.saiku.service.importer.impl.LegacyImporterImpl;
+import org.saiku.service.util.exception.SaikuDataSourceException;
+import org.saiku.service.util.exception.SaikuDataSourceNotFoundException;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class DatasourceService implements Serializable {
 
-  /**
-   * Unique serialization UID
-   */
   private static final long serialVersionUID = -4407446633148181669L;
 
-  private IDatasourceManager datasources;
+  private transient IDatasourceManager datasources;
 
   private IConnectionManager connectionManager;
 
@@ -63,6 +63,42 @@ public class DatasourceService implements Serializable {
       }
 
   }
+
+  public SaikuDatasource fetchDataSourceById(String id) throws SaikuDataSourceNotFoundException {
+      SaikuDatasource saikuDatasource = null;
+      Map<String, SaikuDatasource> datasources = this.getDatasources();
+      Iterator<SaikuDatasource> iterator = datasources.values().iterator();
+      while (iterator.hasNext()) {
+          SaikuDatasource currentDatasource = iterator.next();
+          if (currentDatasource.getProperties().getProperty("id").equals(id)) {
+              saikuDatasource = currentDatasource;
+              break;
+          }
+      }
+      if(saikuDatasource == null){
+          throw new SaikuDataSourceException("Could not find data source with id: " + id);
+      }
+      return saikuDatasource;
+  }
+
+  public void setLocaleOfDataSource(SaikuDatasource dataSource, String newLocale) throws SaikuDataSourceException{
+      String location = dataSource.getProperties().getProperty("location");
+      String oldLocale = getOldLocale(location);
+      String newLocation = location.replace(oldLocale, newLocale);
+      dataSource.getProperties().setProperty("location", newLocation);
+  }
+
+    private String getOldLocale(String location) throws SaikuDataSourceException {
+        String referenceText = "locale=";
+        int start = location.toLowerCase().indexOf(referenceText);
+        if (start == -1) {
+            throw new SaikuDataSourceException("Could not find old locale because there is currently no locale defined in the data source");
+        } else {
+            start += referenceText.length();
+            int end = location.indexOf(";", start);
+            return location.substring(start, end);
+        }
+    }
 
   public void setDatasource(SaikuDatasource datasource) throws Exception {
     datasources.setDatasource(datasource);
@@ -94,16 +130,21 @@ public class DatasourceService implements Serializable {
 
   public String saveFile(String content, String path, String name, List<String> roles) { return datasources.saveFile(path, content, name, roles); }
 
-  public String removeFile(String path, String name, List<String> roles) { return datasources.removeFile(path, name, roles); }
+  public String removeFile(String path, String name, List<String> roles) { return datasources.removeFile(path, name,
+      roles); }
 
-    public String moveFile(String source, String target, String name, List<String> roles) { return datasources.moveFile(source, target, name, roles); }
+    public String moveFile(String source, String target, String name, List<String> roles) { return datasources.moveFile(
+        source, target, name, roles); }
 
 
     public List<IRepositoryObject> getFiles(String type, String username, List<String> roles) {
-      return datasources.getFiles(type,username,roles);
+      return datasources.getFiles(type, username, roles);
   }
-
-  public String getFileData(String path, String username, List<String> roles){return datasources.getFileData(path, username, roles); }
+  public List<IRepositoryObject> getFiles(String type, String username, List<String> roles, String path) {
+    return datasources.getFiles(type, username, roles, path);
+  }
+  public String getFileData(String path, String username, List<String> roles){return datasources.getFileData(path,
+      username, roles); }
 
   public void importLegacySchema(){
 
@@ -144,4 +185,12 @@ public class DatasourceService implements Serializable {
     public void createUserHome(String user){
         datasources.createUser(user);
     }
+
+  private void readObject(ObjectInputStream stream)
+      throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();
+    datasources = connectionManager.getDataSourceManager();
+  }
+
+
 }

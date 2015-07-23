@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * Central object for handling global application state
  */
@@ -22,7 +22,7 @@ var Saiku = {
      * View which manages toolbar interactions
      */
     toolbar: {},
-    
+
     /**
      * View which handles tabs
      */
@@ -33,12 +33,12 @@ var Saiku = {
      * Model which handles session and authentication
      */
     session: null,
-    
+
     /**
      * Global event bus
      */
     events: _.extend({}, Backbone.Events),
-    
+
     /**
      * Collection of routers for page fragments
      */
@@ -53,9 +53,9 @@ var Saiku = {
             $('.processing_message').removeClass("i18n_translated").addClass("i18n");
             Saiku.i18n.translate();
 
-            $('.processing,.processing_container').show();  
+            $('.processing,.processing_container').show();
         },
-        
+
         unblock: function() {
             $('.processing,.processing_container, .blockOverlay').hide();
 
@@ -82,24 +82,32 @@ var Saiku = {
             if (/^\s*$/.test(value))           { return null; }
             if (/^(true|false)$/i.test(value)) { return value.toLowerCase() === 'true'; }
             if (isFinite(value))               { return parseFloat(value); }
-            if (isFinite(Date.parse(value)))   { return new Date(value); }
 
             return value;
         },
 
-        equals: function() {
-            params = Array.prototype.slice.call(arguments);
-
+        paramsURI: function() {
             var paramsURI = {},
-                keyValue,               
-                couples = window.location.search.substr(1).split('&');
+                couples = window.location.search.substr(1).split('&'),
+                lenCouples = couples.length,
+                keyId,
+                keyValue;
 
             if (window.location.search.length > 1) {
-                for (var keyId = 0; keyId < couples.length; keyId++) {                    
+                for (keyId = 0; keyId < lenCouples; keyId++) {
                     keyValue = couples[keyId].split('=');
-                    paramsURI[decodeURIComponent(keyValue[0])] = keyValue.length > 1 ? this.buildValue(decodeURIComponent(keyValue[1])) : null;
+                    paramsURI[decodeURIComponent(keyValue[0])] = keyValue.length > 1 
+                        ? this.buildValue(decodeURIComponent(keyValue[1])) 
+                        : null;
                 }
             }
+
+            return paramsURI;
+        },
+
+        equals: function() {
+            var params = Array.prototype.slice.call(arguments),
+                paramsURI = this.paramsURI();
 
             if (_.isEqual(paramsURI, params[0])) {
                 return true;
@@ -108,13 +116,107 @@ var Saiku = {
                 return false;
             }
         }
+    },
+    loadCSS: function(href, media) {
+        var cssNode = window.document.createElement('link'),
+            ref = window.document.getElementsByTagName('script')[0];
+
+        cssNode.rel = 'stylesheet';
+        cssNode.href = href;
+
+        // Temporarily, set media to something non-matching to
+        // ensure it'll fetch without blocking render
+        cssNode.media = 'only x';
+
+        // Inject link
+        ref.parentNode.insertBefore(cssNode, ref);
+
+        // Set media back to `all` so that the
+        // stylesheet applies once it loads
+        setTimeout(function() {
+            cssNode.media = media || 'all';
+        });
+
+        return cssNode;
+    },
+    loadJS: function(src, callback) {
+        var scriptNode = window.document.createElement('script'),
+            ref = window.document.getElementsByTagName('script')[0];
+
+        scriptNode.src = src;
+        scriptNode.async = true;
+
+        // Inject script
+        ref.parentNode.insertBefore(scriptNode, ref);
+
+        // if callback...
+        if (callback && typeof(callback) === 'function') {
+            scriptNode.onload = callback;
+        }
+
+        return scriptNode;
+    },
+    toPattern: function(value, opts) {
+        var DIGIT = '9',
+            ALPHA = 'A',
+            ALPHANUM = 'S',
+            output = (typeof opts === 'object' ? opts.pattern : opts).split(''),
+            values = value.toString().replace(/[^0-9a-zA-Z]/g, ''),
+            index = 0,
+            len = output.length,
+            i;
+
+        for (i = 0; i < len; i++) {
+            if (index >= values.length) {
+                break;
+            }
+            if ((output[i] === DIGIT && values[index].match(/[0-9]/)) ||
+                (output[i] === ALPHA && values[index].match(/[a-zA-Z]/)) ||
+                (output[i] === ALPHANUM && values[index].match(/[0-9a-zA-Z]/))) {
+                output[i] = values[index++];
+            }
+            else if (output[i] === DIGIT ||
+                     output[i] === ALPHA ||
+                     output[i] === ALPHANUM) {
+                output = output.slice(0, i);
+            }
+        }
+
+        return output.join('').substr(0, i);
     }
 };
 
 /**
- * Setting this option to true will fake PUT and DELETE requests 
- * with a HTTP POST, and pass them under the _method parameter. 
- * Setting this option will also set an X-HTTP-Method-Override header 
+ * Saiku Singleton pattern
+ */
+Saiku.singleton = (function() {
+    'use strict';
+
+    var instance;
+
+    Saiku.singleton = function() {
+        if (instance) {
+            return instance;
+        }
+
+        instance = this;
+
+        this.set = function(data) {
+            this.data = data;
+        };
+
+        this.get = function() {
+            return this.data;
+        };
+    };
+
+    return Saiku.singleton;
+}());
+
+/**
+ * Setting this option to true will fake PUT and DELETE requests
+ * with a HTTP POST, and pass them under the _method parameter.
+ * Setting this option will also set an X-HTTP-Method-Override header
  * with the true method. This is required for BI server integration
  */
 Backbone.emulateHTTP = false;
@@ -123,29 +225,133 @@ Backbone.emulateHTTP = false;
  * Up up and away!
  */
 if (! Settings.BIPLUGIN) {
-    $(document).ready(function() {
+    $(document).ready(function () {
         var plugins = new PluginCollection();
 
         plugins.fetch({
-            success: function() {
-                var i = plugins.size();
-                var j = 0;
-                plugins.each(function(log) {
-                    j = j+1;
-                    jQuery.getScript(log.attributes.path);
+            success: function () {
+                var settingsoverride = new SettingsOverrideCollection();
 
-                    if(j == i) {
-                        Saiku.session = new Session({}, {
-                            username: Settings.USERNAME,
-                            password: Settings.PASSWORD
+                settingsoverride.fetch({
+                    success: function () {
+                        var i = plugins.size();
+                        var j = 0;
+                        plugins.each(function (log) {
+                            j = j + 1;
+                            if (log.attributes.path != "js/saiku/plugins/I18n/plugin.js") {
+                                jQuery.ajax({
+                                    async:false,
+                                    type:'GET',
+                                    url:log.attributes.path,
+                                    data:null,
+                                    success:function(){
+                                        if (j == i) {
+
+                                            var k = settingsoverride.size();
+                                            var l = 0;
+                                            settingsoverride.each(function (log) {
+                                                l = l + 1;
+
+                                                for (var key in log.attributes) {
+                                                    Settings[key] = log.attributes[key];
+                                                }
+                                                if(Settings.CSS != undefined){
+                                                    Saiku.loadCSS(Settings.CSS, null)
+                                                }
+                                                if (k == l) {
+                                                    Saiku.session = new Session({}, {
+                                                        username: Settings.USERNAME,
+                                                        password: Settings.PASSWORD
+                                                    });
+
+                                                    Saiku.toolbar = new Toolbar();
+                                                }
+                                            });
+
+                                        }
+                                    },
+                                    dataType:'script'
+                                });
+                            }
+                            else{
+                                if (j == i) {
+
+                                    var k = settingsoverride.size();
+                                    var l = 0;
+                                    settingsoverride.each(function (log) {
+                                        l = l + 1;
+
+                                        for (var key in log.attributes) {
+                                            Settings[key] = log.attributes[key];
+                                        }
+                                        if(Settings.CSS != undefined){
+                                            Saiku.loadCSS(Settings.CSS, null)
+                                        }
+                                        if (k == l) {
+                                            Saiku.session = new Session({}, {
+                                                username: Settings.USERNAME,
+                                                password: Settings.PASSWORD
+                                            });
+
+                                            Saiku.toolbar = new Toolbar();
+                                        }
+                                    });
+
+                                }
+                            }
+
                         });
 
-                        Saiku.toolbar = new Toolbar();
+
+                    },
+                    error: function () {
+                        var i = plugins.size();
+                        var j = 0;
+                        plugins.each(function (log) {
+                            j = j + 1;
+                            if (log.attributes.path != "js/saiku/plugins/I18n/plugin.js") {
+                                jQuery.ajax({
+                                    async:false,
+                                    type:'GET',
+                                    url:log.attributes.path,
+                                    data:null,
+                                    success: function(){
+                                        if (j == i) {
+                                            if(Settings.CSS != undefined){
+                                                Saiku.loadCSS(Settings.CSS, null)
+                                            }
+                                            Saiku.session = new Session({}, {
+                                                username: Settings.USERNAME,
+                                                password: Settings.PASSWORD
+                                            });
+
+                                            Saiku.toolbar = new Toolbar();
+                                        }
+                                    },
+                                    dataType:'script'
+                                });
+                            }
+                            else{
+                                if (j == i) {
+
+                                    if(Settings.CSS != undefined){
+                                        Saiku.loadCSS(Settings.CSS, null)
+                                    }
+                                    Saiku.session = new Session({}, {
+                                        username: Settings.USERNAME,
+                                        password: Settings.PASSWORD
+                                    });
+
+                                    Saiku.toolbar = new Toolbar();
+
+                                }
+                            }
+                        });
+
                     }
                 });
             }
         });
-
     });
 }
 /**
@@ -159,8 +365,6 @@ var SaikuTimeLogger = function(element) {
     this._timestamps = [];
     this._events = [];
 };
-
-
 
 SaikuTimeLogger.prototype.log = function(eventname) {
     var time = (new Date()).getTime();

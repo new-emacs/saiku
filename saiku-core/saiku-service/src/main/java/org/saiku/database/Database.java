@@ -1,15 +1,16 @@
 package org.saiku.database;
 
-import org.h2.jdbcx.JdbcDataSource;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.service.datasource.IDatasourceManager;
 import org.saiku.service.importer.LegacyImporter;
-import org.saiku.service.importer.impl.LegacyImporterImpl;
+import org.saiku.service.importer.LegacyImporterImpl;
+
+import org.h2.jdbcx.JdbcDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +19,8 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.Properties;
 
+import javax.servlet.ServletContext;
+
 /**
  * Created by bugg on 01/05/14.
  */
@@ -25,9 +28,10 @@ public class Database {
 
     @Autowired
     ServletContext servletContext;
+
     private JdbcDataSource ds;
     private static final Logger log = LoggerFactory.getLogger(Database.class);
-
+    BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     IDatasourceManager dsm;
     public Database() {
 
@@ -66,9 +70,9 @@ public class Database {
         String url = servletContext.getInitParameter("foodmart.url");
         String user = servletContext.getInitParameter("foodmart.user");
         String pword = servletContext.getInitParameter("foodmart.password");
-        if(url!=null && !url.equals("[[foodmartplaceholder]]")) {
+        if(url!=null && !url.equals("${foodmart_url}")) {
             JdbcDataSource ds2 = new JdbcDataSource();
-            ds2.setURL(url);
+            ds2.setURL(dsm.getFoodmarturl());
             ds2.setUser(user);
             ds2.setPassword(pword);
 
@@ -80,10 +84,14 @@ public class Database {
                 // Table exists
                 Statement statement = c.createStatement();
 
-                statement.execute("RUNSCRIPT FROM '../../data/foodmart_h2.sql'");
+                statement.execute("RUNSCRIPT FROM '"+dsm.getFoodmartdir()+"/foodmart_h2.sql'");
+
+                statement.execute("alter table \"time_by_day\" add column \"date_string\" varchar(30);"
+                                  + "update \"time_by_day\" "
+                                  + "set \"date_string\" = TO_CHAR(\"the_date\", 'yyyy/mm/dd');");
                 String schema = null;
                 try {
-                    schema = readFile("../../data/FoodMart4.xml", StandardCharsets.UTF_8);
+                    schema = readFile(dsm.getFoodmartschema(), StandardCharsets.UTF_8);
                 } catch (IOException e) {
                     log.error("Can't read schema file",e);
                 }
@@ -94,7 +102,8 @@ public class Database {
                 }
                 Properties p = new Properties();
                 p.setProperty("driver", "mondrian.olap4j.MondrianOlap4jDriver");
-                p.setProperty("location", "jdbc:mondrian:Jdbc=jdbc:h2:../../data/foodmart;Catalog=mondrian:///datasources/foodmart4.xml;JdbcDrivers=org.h2.Driver");
+                p.setProperty("location", "jdbc:mondrian:Jdbc=jdbc:h2:"+dsm.getFoodmartdir()+"/foodmart;"+
+                "Catalog=mondrian:///datasources/foodmart4.xml;JdbcDrivers=org.h2.Driver");
                 p.setProperty("username", "sa");
                 p.setProperty("password", "");
                 p.setProperty("id", "4432dd20-fcae-11e3-a3ac-0800200c9a66");
@@ -103,7 +112,7 @@ public class Database {
                 try {
                     dsm.addDatasource(ds);
                 } catch (Exception e) {
-                    log.error("Can't add data source to reop",e);
+                    log.error("Can't add data source to repo",e);
                 }
             } else {
                 Statement statement = c.createStatement();
@@ -127,7 +136,7 @@ public class Database {
         statement.execute("CREATE TABLE IF NOT EXISTS LOG(time TIMESTAMP AS CURRENT_TIMESTAMP NOT NULL, log CLOB);");
 
         statement.execute("CREATE TABLE IF NOT EXISTS USERS(user_id INT(11) NOT NULL AUTO_INCREMENT, " +
-                "username VARCHAR(45) NOT NULL UNIQUE, password VARCHAR(45) NOT NULL, email VARCHAR(100), " +
+                "username VARCHAR(45) NOT NULL UNIQUE, password VARCHAR(100) NOT NULL, email VARCHAR(100), " +
                 "enabled TINYINT NOT NULL DEFAULT 1, PRIMARY KEY(user_id));");
 
         statement.execute("CREATE TABLE IF NOT EXISTS USER_ROLES (\n"
@@ -144,7 +153,7 @@ public class Database {
             statement.execute("INSERT INTO users(username,password,email, enabled)\n"
                     + "VALUES ('admin','admin', 'test@admin.com',TRUE);" +
                     "INSERT INTO users(username,password,enabled)\n"
-                    + "VALUES ('smith','pravah@001', TRUE);");
+                    + "VALUES ('smith','smith', TRUE);");
             statement.execute(
                     "INSERT INTO user_roles (user_id, username, ROLE)\n"
                             + "VALUES (1, 'admin', 'ROLE_USER');" +
@@ -156,6 +165,44 @@ public class Database {
             statement.execute("INSERT INTO LOG(log) VALUES('insert users');");
         }
 
+        String encrypt = servletContext.getInitParameter("db.encryptpassword");
+        if(encrypt.equals("true") && !checkUpdatedEncyption()){
+            log.debug("Encrypting User Passwords");
+            updateForEncyption();
+            log.debug("Finished Encrypting Passwords");
+        }
+
+
+    }
+
+    public boolean checkUpdatedEncyption() throws SQLException{
+        Connection c = ds.getConnection();
+
+        Statement statement = c.createStatement();
+        ResultSet result = statement.executeQuery("select count(*) as c from LOG where log = 'update passwords'");
+        result.next();
+        return result.getInt("c") != 0;
+    }
+    public void updateForEncyption() throws SQLException {
+        Connection c = ds.getConnection();
+
+        Statement statement = c.createStatement();
+        statement.execute("ALTER TABLE users ALTER COLUMN password VARCHAR(100) DEFAULT NULL");
+
+        ResultSet result = statement.executeQuery("select username, password from users");
+
+        while(result.next()){
+            statement = c.createStatement();
+
+            String pword = result.getString("password");
+            String hashedPassword = passwordEncoder.encode(pword);
+            String sql = "UPDATE users " +
+                        "SET password = '"+hashedPassword+"' WHERE username = '"+result.getString("username")+"'";
+            statement.executeUpdate(sql);
+        }
+        statement = c.createStatement();
+
+        statement.execute("INSERT INTO LOG(log) VALUES('update passwords');");
 
     }
 

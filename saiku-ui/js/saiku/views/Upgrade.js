@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,56 +13,84 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * The global toolbar
  */
 var Upgrade = Backbone.View.extend({
     tagName: "div",
-    
+
     events: {
-        'click .upgradeheader' : 'call'
     },
-    
-    template: function() {
-        var template = $("#template-upgrade").html() || "";
 
-        return _.template(template)();
-    },
-    
-    initialize: function() {
+
+    initialize: function(a, b) {
+
+		this.workspace = a.workspace;
 
     },
-    
+
+	daydiff: function(first, second) {
+	return Math.round((second-first)/(1000*60*60*24));
+	},
+
     render: function() {
-        if (!Settings.UPGRADE)
-            return this;
 
-        var timeout = Saiku.session.upgradeTimeout;
-        var localStorageUsed = false;
-        var first = true;
-        if (typeof localStorage !== "undefined" && localStorage) {
-            if (localStorage.getItem("saiku.upgradeTimeout") !== null) {
-                timeout = localStorage.getItem("saiku.upgradeTimeout");
-            }
-            localStorageUsed = true;
-        }
+		var self = this;
+		var license = new License();
+		if(Settings.BIPLUGIN5){
+			license.fetch_license('api/api/license', function (opt) {
+				if (opt.status !== 'error' && opt.data.get("licenseType") != "trial") {
+					return this;
+				}
+				else if(opt.status !== 'error' && opt.data.get("licenseType") === "trial"){
+					var yourEpoch = parseFloat(opt.data.get("expiration"));
+					var yourDate = new Date(yourEpoch);
+					self.remainingdays = self.daydiff(new Date(), yourDate);
 
-        var current = (new Date()).getTime();
-        if (!timeout || (current - timeout) > (10 * 60 * 1000)) {
-            $(this.el).html(this.template());
-            Saiku.session.upgradeTimeout = current;
-            if (typeof localStorage !== "undefined" && localStorage) {
-                localStorage.setItem("saiku.upgradeTimeout", current);
-            }
-        }
-        
 
-        return this;
+					$(self.workspace.el).find('.upgrade').append("<div><div id='uphead' class='upgradeheader'>You are using a Saiku Enterprise Trial license, you have "+ self.remainingdays+" days remaining. <a href='http://www.meteorite.bi/saiku-pricing'>Buy licenses online.</a></div>");
+					return self;
+				}
+				else {
+					$(self.workspace.el).find('.upgrade').append("<div><div id='uphead' class='upgradeheader'>You are using Saiku Community Edition, please consider upgrading to <a target='_blank' href='http://meteorite.bi'>Saiku Enterprise</a>, or entering a <a href='http://meteorite.bi/products/saiku/sponsorship'>sponsorship agreement with us</a> to support development. " +
+						"<a href='http://meteorite.bi/products/saiku/community'>Or contribute by joining our community and helping other users!</a></div></div>");
+					return self;
+				}
+			});
+		}
+		else {
+			license.fetch_license('api/license/', function (opt) {
+				if (opt.status !== 'error' && opt.data.get("licenseType") != "trial") {
+					return this;
+				}
+				else if(opt.status !== 'error' && opt.data.get("licenseType") === "trial"){
+					var yourEpoch = parseFloat(opt.data.get("expiration"));
+					var yourDate = new Date(yourEpoch);
+
+					self.remainingdays = self.daydiff(new Date(), yourDate);
+
+					$(self.workspace.el).find('.upgrade').append("<div><div id='uphead' class='upgradeheader'>You are using a Saiku Enterprise Trial license, you have "+ self.remainingdays+" days remaining. <a href='http://www.meteorite.bi/saiku-pricing'>Buy licenses online.</a></div>");
+					return self;
+				}
+				else {
+					$(self.workspace.el).find('.upgrade').append("<div><div id='uphead' class='upgradeheader'>You are using Saiku Community Edition, please consider upgrading to <a target='_blank' href='http://meteorite.bi'>Saiku Enterprise</a>, or entering a <a href='http://meteorite.bi/products/saiku/sponsorship'>sponsorship agreement with us</a> to support development. " +
+						"<a href='http://meteorite.bi/products/saiku/community'>Or contribute by joining our community and helping other users!</a></div></div>");
+					return self;
+				}
+			});
+		}
+
+
+
+
+
+
+
+
     },
-    
+
     call: function(e) {
-        $(".upgradeheader").slideUp("slow");
     }
 
 });

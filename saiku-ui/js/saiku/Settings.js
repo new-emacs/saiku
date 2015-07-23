@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,12 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * Change settings here
  */
 var Settings = {
-    VERSION: "Saiku 3.0-SNAPSHOT",
+    VERSION: "Saiku-${version}",
     BIPLUGIN: false,
     BIPLUGIN5: false,
     BASE_URL: window.location.origin,
@@ -28,6 +28,7 @@ var Settings = {
     DIMENSION_SHOW_ALL: true,
     DIMENSION_SHOW_REDUCED: false,
     ERROR_LOGGING: false,
+    I18N_LOCALE: "en",
     // number of erroneous ajax calls in a row before UI cant recover
     ERROR_TOLERANCE: 3,
     QUERY_PROPERTIES: {
@@ -55,7 +56,7 @@ var Settings = {
     MEMBERS_LIMIT: 3000,
     MEMBERS_SEARCH_LIMIT: 75,
     ALLOW_IMPORT_EXPORT: false,
-    ALLOW_PARAMETERS: false,
+    ALLOW_PARAMETERS: true,
     PLUGINS: [
         "Chart"
     ],
@@ -63,7 +64,10 @@ var Settings = {
     DEMO: false,
     TELEMETRY_SERVER: 'http://telemetry.analytical-labs.com:7000',
     LOCALSTORAGE_EXPIRATION: 10 * 60 * 60 * 1000 /* 10 hours, in ms */,
-    UPGRADE: true    
+    UPGRADE: true,
+    EVALUATION_PANEL_LOGIN: true,
+    QUERY_OVERWRITE_WARNING: true,
+    MAPS: true
 };
 
 /**
@@ -76,13 +80,20 @@ Settings.GET = function () {
         tokens,
         re = /[?&]?([^=]+)=([^&]*)/g;
 
-    while (tokens = re.exec(qs)) {
+    tokens = re.exec(qs);
+    while (tokens) {
         var value = decodeURIComponent(tokens[2]);
         if (! isNaN(value)) value = parseInt(value);
         if (value === "true") value = true;
         if (value === "false") value = false;
-        params[decodeURIComponent(tokens[1]).toUpperCase()]
-            = value;
+		if(decodeURIComponent(tokens[1].toUpperCase()).substring(0,5)==="PARAM"){
+			params["PARAM"+decodeURIComponent(tokens[1]).substring(5,decodeURIComponent(tokens[1]).length)] = value;
+		}
+		else{
+			params[decodeURIComponent(tokens[1]).toUpperCase()] = value;
+		}
+
+        tokens = re.exec(qs);
     }
 
     return params;
@@ -99,8 +110,7 @@ Settings.PARAMS = (function() {
     return p;
 }());
 
-Settings.REST_URL = Settings.TOMCAT_WEBAPP 
-    + Settings.REST_MOUNT_POINT;
+Settings.REST_URL = Settings.TOMCAT_WEBAPP + Settings.REST_MOUNT_POINT;
 
 // lets assume we dont need a min width/height for table mode
 if (Settings.MODE == "table") {
@@ -121,6 +131,11 @@ if (document.location.hash) {
     }
 }
 
+Settings.MONDRIAN_LOCALES = {
+    "English": "en_US",
+    "Dutch": "nl_BE",
+    "French": "fr_FR"
+};
 
 /**
  * < IE9 doesn't support Array.indexOf
@@ -132,9 +147,7 @@ if (!Array.prototype.indexOf)
     var len = this.length >>> 0;
 
     var from = Number(arguments[1]) || 0;
-    from = (from < 0)
-         ? Math.ceil(from)
-         : Math.floor(from);
+    from = (from < 0) ? Math.ceil(from) : Math.floor(from);
     if (from < 0)
       from += len;
 
@@ -172,7 +185,7 @@ if ($.blockUI) {
 
 }
 
-if (window.location.hostname && (window.location.hostname == "dev.analytical-labs.com" || window.location.hostname == "demo.analytical-labs.com" )) {
+if (window.location.hostname && (window.location.hostname == "try.meteorite.bi" )) {
     Settings.USERNAME = "admin";
     Settings.PASSWORD = "admin";
     Settings.DEMO = true;
@@ -180,10 +193,10 @@ if (window.location.hostname && (window.location.hostname == "dev.analytical-lab
 }
 
 var isIE = (function(){
-    var undef, v = 3; 
-    
+    var undef, v = 3;
+
     var dav = navigator.appVersion;
-    
+
     if(dav.indexOf('MSIE') != -1) {
         v  = parseFloat(dav.split('MSIE ')[1]);
         return v> 4 ? v : false;
@@ -191,3 +204,15 @@ var isIE = (function(){
     return false;
 
 }());
+
+var isFF = (function(userAgent) {
+    'use strict';
+
+    return !!userAgent.match(/Firefox/);
+}(navigator.userAgent));
+
+var isMobile = (function(userAgent) {
+  'use strict';
+
+  return !!userAgent.match(/android|webos|ip(hone|ad|od)|opera (mini|mobi|tablet)|iemobile|windows.+(phone|touch)|mobile|fennec|kindle (Fire)|Silk|maemo|blackberry|playbook|bb10\; (touch|kbd)|Symbian(OS)|Ubuntu Touch/i);
+}(navigator.userAgent));

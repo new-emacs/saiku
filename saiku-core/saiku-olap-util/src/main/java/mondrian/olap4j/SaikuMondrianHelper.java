@@ -15,6 +15,13 @@
  */
 package mondrian.olap4j;
 
+import org.olap4j.*;
+import org.olap4j.Position;
+import org.olap4j.metadata.Level;
+import org.olap4j.metadata.MetadataElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,22 +33,9 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import mondrian.olap.Annotation;
-import mondrian.olap.DrillThrough;
-import mondrian.olap.MondrianServer;
-import mondrian.olap.QueryPart;
-import mondrian.olap.Role;
-import mondrian.olap.RoleImpl;
-import mondrian.olap.Schema;
-import mondrian.olap.Util;
+import mondrian.olap.*;
 import mondrian.rolap.RolapConnection;
-
-import org.olap4j.OlapConnection;
-import org.olap4j.OlapException;
-import org.olap4j.metadata.Level;
-import org.olap4j.metadata.MetadataElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import mondrian.rolap.RolapCubeDimension;
 
 public class SaikuMondrianHelper {
 	
@@ -50,12 +44,11 @@ public class SaikuMondrianHelper {
 
 	public static RolapConnection getMondrianConnection(OlapConnection con) {
 		try {
-			if (!(con instanceof MondrianOlap4jConnection)) {
-				throw new IllegalArgumentException("Connection has to be instance of MondrianOlap4jConnection");
-			}
-			MondrianOlap4jConnection mcon = (MondrianOlap4jConnection) con;
-			return mcon.getMondrianConnection();
-		} catch (OlapException e) {
+            if (!isMondrianConnection(con)) {
+                throw new IllegalArgumentException("Connection has to wrap RolapConnection");
+            }
+            return con.unwrap(RolapConnection.class);
+        } catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -67,8 +60,13 @@ public class SaikuMondrianHelper {
 	}
 	
 	public static boolean isMondrianConnection(OlapConnection con) {
-		return (con instanceof MondrianOlap4jConnection);
-	}
+        try {
+            return con.isWrapperFor(RolapConnection.class);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
 	public static boolean isMondrianDrillthrough(OlapConnection con, String mdx) {
 		boolean isMondrian = isMondrianConnection(con);
@@ -80,15 +78,11 @@ public class SaikuMondrianHelper {
 		return false;
 	}
 	public static void setRoles(OlapConnection con, String[] roleNames) throws Exception {
-		if (!(con instanceof MondrianOlap4jConnection)) {
-			throw new IllegalArgumentException("Connection has to be instance of MondrianOlap4jConnection");
-		}
+        RolapConnection rcon = getMondrianConnection(con);
 		if (roleNames == null) {
 			con.setRoleName(null);
 			return;
 		}
-		MondrianOlap4jConnection mcon = (MondrianOlap4jConnection) con;
-		RolapConnection rcon = getMondrianConnection(mcon);
 		Schema schema = rcon.getSchema();
 		List<Role> roleList = new ArrayList<Role>();
 		Role role;
@@ -152,6 +146,46 @@ public class SaikuMondrianHelper {
 		return null;
 		
 	}
+
+  public static List<org.olap4j.metadata.Member> getMDXMemberLookup(OlapConnection con, String cube, Level level){
+	OlapStatement statement = null;
+	try {
+	  statement = con.createStatement();
+	} catch (OlapException e) {
+	  e.printStackTrace();
+	}
+	try {
+	  String l = null;
+	  RolapCubeDimension o = (RolapCubeDimension) ((MondrianOlap4jDimension) level.getDimension()).getOlapElement();
+	  if(o.getHanger()){
+		l = level.getHierarchy().getUniqueName();
+	  }
+	  else{
+		l = level.getUniqueName();
+	  }
+	  CellSet cellSet = statement.executeOlapQuery("with member [Measures].[Zero] as 0\n"
+												+ " select AddCalculatedMembers(" + l
+												+ ".Members) on 0\n"
+												+ " from [" + cube + "]\n"
+												+ " where [Measures].[Zero]");
+
+
+	  List<org.olap4j.metadata.Member> members = new ArrayList<org.olap4j.metadata.Member>();
+	  List<CellSetAxis> cellSetAxes = cellSet.getAxes();
+	  CellSetAxis columnsAxis = cellSetAxes.get(0);
+	             // Print headings.
+	             System.out.print("\t");
+	             //CellSetAxis columnsAxis = cellSetAxes.get(Axis.COLUMNS.ordinal());
+	             for (Position position : columnsAxis.getPositions()) {
+				   org.olap4j.metadata.Member m = position.getMembers().get(0);
+		               members.add(m);
+		           }
+	  return members;
+	} catch (OlapException e) {
+	  e.printStackTrace();
+	}
+return null;
+  }
 
 //	public void getAnnotationMap(MetadataElement element) throws SQLException {
 //		if (isMondrian(element)) {

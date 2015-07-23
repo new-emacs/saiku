@@ -21,27 +21,40 @@ import org.saiku.datasources.connection.RepositoryFile;
 import org.saiku.datasources.datasource.SaikuDatasource;
 import org.saiku.repository.*;
 import org.saiku.service.importer.LegacyImporter;
-import org.saiku.service.importer.impl.LegacyImporterImpl;
+import org.saiku.service.importer.LegacyImporterImpl;
 import org.saiku.service.user.UserService;
 import org.saiku.service.util.exception.SaikuServiceException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * A Datasource Manager for the Saiku Repository API layer.
  */
 public class RepositoryDatasourceManager implements IDatasourceManager {
-    IRepositoryManager irm = JackRabbitRepositoryManager.getJackRabbitRepositoryManager();
     private Map<String, SaikuDatasource> datasources =
             Collections.synchronizedMap(new HashMap<String, SaikuDatasource>());
     private UserService userService;
     private static final Logger log = LoggerFactory.getLogger(RepositoryDatasourceManager.class);
+    private String configurationpath;
+    private String datadir;
+    IRepositoryManager irm;
+    private String foodmartdir;
+    private String foodmartschema;
+    private String foodmarturl;
+    private String repopassword;
+    private String oldpassword;
+
     public void load() {
+        irm = JackRabbitRepositoryManager.getJackRabbitRepositoryManager(configurationpath, datadir, repopassword,
+            oldpassword);
         try {
             irm.start(userService);
         } catch (RepositoryException e) {
@@ -61,12 +74,36 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
                 for (DataSource file : exporteddatasources) {
                     if (file.getName() != null && file.getType() != null) {
                         Properties props = new Properties();
-                        props.put("driver", file.getDriver());
-                        props.put("location", file.getLocation());
-                        props.put("username", file.getUsername());
-                        props.put("password", file.getPassword());
-                        props.put("path", file.getPath());
-                        props.put("id", file.getId());
+                        if(file.getDriver()!= null) {
+                            props.put("driver", file.getDriver());
+                        }
+                        if(file.getLocation()!=null) {
+                            props.put("location", file.getLocation());
+                        }
+                        if(file.getUsername()!=null) {
+                            props.put("username", file.getUsername());
+                        }
+                        if(file.getPassword()!=null) {
+                            props.put("password", file.getPassword());
+                        }
+                        if(file.getPath()!=null) {
+                            props.put("path", file.getPath());
+                        }
+                        if(file.getId()!=null) {
+                            props.put("id", file.getId());
+                        }
+                        if(file.getSecurityenabled()!=null) {
+                          props.put("security.enabled", file.getSecurityenabled());
+                        }
+                        if(file.getSecuritytype()!=null) {
+                          props.put("security.type", file.getSecuritytype());
+                        }
+                        if(file.getSecuritymapping()!=null) {
+                          props.put("security.mapping", file.getSecuritymapping());
+                        }
+                        if(file.getAdvanced()!=null){
+                          props.put("advanced", file.getAdvanced());
+                        }
                         SaikuDatasource.Type t = SaikuDatasource.Type.valueOf(file.getType().toUpperCase());
                         SaikuDatasource ds = new SaikuDatasource(file.getName(), t, props);
                         datasources.put(file.getName(), ds);
@@ -126,18 +163,11 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
                 if(data.getId().equals(datasourceId)){
                     datasources.remove(data.getName());
                     irm.deleteFile(data.getPath());
-                    break;
+                    return true;
                 }
             }
-            return true;
         }
-        else{
-            return false;
-        }
-
-
-
-
+        return false;
     }
 
     public boolean removeSchema(String schemaName) {
@@ -174,7 +204,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
     }
 
     public void addSchema(String file, String path, String name) throws Exception {
-            irm.saveFile(file, path, "admin", "nt:mondrianschema", null);
+            irm.saveInternalFile(file, path, "nt:mondrianschema");
 
     }
 
@@ -213,7 +243,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
 
     }
 
-    public String saveFile(String path, String content, String user, List<String> roles) {
+    public String saveFile(String path, Object content, String user, List<String> roles) {
         try {
             irm.saveFile(content, path, user, "nt:saikufiles", roles);
             return "Save Okay";
@@ -243,7 +273,7 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         }
     }
 
-    public String saveInternalFile(String path, String content, String type) {
+    public String saveInternalFile(String path, Object content, String type) {
         try {
             irm.saveInternalFile(content, path, type);
             return "Save Okay";
@@ -252,7 +282,16 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
             return "Save Failed: " + e.getLocalizedMessage();
         }
     }
-    
+
+    public String saveBinaryInternalFile(String path, InputStream content, String type) {
+        try {
+            irm.saveBinaryInternalFile(content, path, type);
+            return "Save Okay";
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+            return "Save Failed: " + e.getLocalizedMessage();
+        }
+    }
     public void removeInternalFile(String filePath) {
         try{
             irm.removeInternalFile(filePath);
@@ -270,6 +309,16 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
         }
         return null;
     }
+
+    public List<IRepositoryObject> getFiles(String type, String username, List<String> roles, String path) {
+        try {
+            return irm.getAllFiles(type, username, roles, path);
+        } catch (RepositoryException e) {
+            log.error("Get failed", e);
+        }
+        return null;
+    }
+
 
     public void createUser(String username){
         try {
@@ -358,6 +407,62 @@ public class RepositoryDatasourceManager implements IDatasourceManager {
 
     public Object getRepository() {
         return irm.getRepositoryObject();
+    }
+
+    public void setConfigurationpath(String configurationpath) {
+        this.configurationpath = configurationpath;
+    }
+
+    public String getConfigurationpath() {
+        return configurationpath;
+    }
+
+    public void setDatadir(String datadir) {
+        this.datadir = datadir;
+    }
+
+    public String getDatadir() {
+        return datadir;
+    }
+
+    public void setFoodmartdir(String foodmartdir) {
+        this.foodmartdir = foodmartdir;
+    }
+
+    public String getFoodmartdir() {
+        return foodmartdir;
+    }
+
+    public void setFoodmartschema(String foodmartschema) {
+        this.foodmartschema = foodmartschema;
+    }
+
+    public String getFoodmartschema() {
+        return foodmartschema;
+    }
+
+    public void setFoodmarturl(String foodmarturl) {
+        this.foodmarturl = foodmarturl;
+    }
+
+    public String getFoodmarturl() {
+        return foodmarturl;
+    }
+
+    public void setRepoPassword(String password){
+        this.repopassword = password;
+    }
+
+    public String getRepopassword(){
+        return repopassword;
+    }
+
+    public void setOldRepoPassword(String password){
+        this.oldpassword = password;
+    }
+
+    public String getOldRepopassword(){
+        return oldpassword;
     }
 }
 

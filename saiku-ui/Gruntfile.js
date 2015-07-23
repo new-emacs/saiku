@@ -1,17 +1,27 @@
 module.exports = function(grunt) {
-	grunt.initConfig({
+    'use strict';
 
-		// Autoprefixer definitions
-		autoprefixer: {
-			file: {
-				src: 'css/saiku/src/styles.css'
-			}
-		}
-	});
+    grunt.initConfig({
 
-	// These plugins provide necessary tasks
-	grunt.loadNpmTasks('grunt-autoprefixer');
+        // Import Saiku files
+        saiku: grunt.file.readJSON('saikuFilesPath.json'),
+        
+        // Watch definitions
+        watch: {
+            reload: {
+                files: ['<%= saiku.path.css %>', '<%= saiku.path.html %>', '<%= saiku.path.js %>'],
+                options: {
+                    livereload: {
+                        port: 35729
+                    }
+                }
+            }
+        }
 
-	// By default, lint and run all tests
-	grunt.registerTask('default', ['autoprefixer']);
+    });
+
+    // These plugins provide necessary tasks
+    grunt.loadNpmTasks('grunt-contrib-watch');
+
+    grunt.registerTask('default', ['watch']);
 };

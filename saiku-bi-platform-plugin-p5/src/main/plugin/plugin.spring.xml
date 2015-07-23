@@ -50,9 +50,9 @@
 	</bean>
 
 
-	<bean id="datasourceResourceBean" class="org.saiku.plugin.resources.PentahoDatasourceResource">
+	<!--<bean id="datasourceResourceBean" class="org.saiku.plugin.resources.PentahoDatasourceResource">
 		<property name="datasourceService" ref="datasourceServiceBean" />
-	</bean>
+	</bean>-->
 
 	<bean id="olapDiscoverBean" class="org.saiku.plugin.resources.PentahoDiscoverResource">
 		<property name="olapDiscoverService" ref="olapDiscoverServiceBean" />
@@ -60,6 +60,7 @@
 
 	<bean id="queryResource" class="org.saiku.plugin.resources.PentahoQueryResource">
 		<property name="thinQueryService" ref="thinQueryBean" />
+        <property name="repository" ref="repositoryBean2"/>
 	</bean>
 	
 	<bean id="sessionService" class="org.saiku.plugin.PentahoSessionService">

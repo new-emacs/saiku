@@ -15,54 +15,34 @@
  */
 package org.saiku.web.rest.resources;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.vfs.FileObject;
-import org.apache.commons.vfs.FileSystemException;
-import org.apache.commons.vfs.FileSystemManager;
-import org.apache.commons.vfs.FileType;
-import org.apache.commons.vfs.VFS;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.type.TypeFactory;
 import org.saiku.olap.dto.SimpleCubeElement;
 import org.saiku.olap.dto.filter.SaikuFilter;
 import org.saiku.service.ISessionService;
 import org.saiku.service.olap.OlapQueryService;
 import org.saiku.service.util.exception.SaikuServiceException;
-import org.saiku.web.service.SessionService;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.MapType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.qmino.miredot.annotations.ReturnType;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.vfs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.io.*;
+import java.util.*;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
 /**
  * QueryServlet contains all the methods required when manipulating an OLAP Query.
@@ -123,12 +103,12 @@ public class FilterRepositoryResource {
 	}
 
 
-	@Autowired
+	//@Autowired
 	public void setOlapQueryService(OlapQueryService olapqs) {
 		olapQueryService = olapqs;
 	}
 	
-	@Autowired
+	//@Autowired
 	public void setSessionService(ISessionService ss) {
 		sessionService = ss;
 	}
@@ -160,7 +140,13 @@ public class FilterRepositoryResource {
 		return MapUtils.orderedMap(allFilters);
 	}
 
-	
+
+  /**
+   * Get All Filters as a CSV file.
+   * @param delimiter The CSV Delimeter.
+   * @param memberdelimiter Member Delimiter.
+   * @return A response containing the CSV file.
+   */
 	@GET
 	@Produces({"text/csv" })
 	@Path("/csv")
@@ -190,10 +176,16 @@ public class FilterRepositoryResource {
 	}
 
 
+  /**
+   * Get filternames as JSON.
+   * @param queryName The query name.
+   * @return A response containing the filter names.
+   */
 	@GET
 	@Produces({"application/json" })
 	@Path("/names/")
-	public Response getSavedFilterNames(@QueryParam("queryname") String queryName) 
+    @ReturnType("java.lang.List<String>")
+    public Response getSavedFilterNames(@QueryParam("queryname") String queryName)
 	{
 		try {
 			Map<String, SaikuFilter> allFilters = getFiltersInternal(queryName);
@@ -207,9 +199,15 @@ public class FilterRepositoryResource {
 			return Response.serverError().entity(error).build();
 		}
 	}
-	
 
 
+  /**
+   * Get Saved Filters as JSON.
+   * @summary Get filters as JSON.
+   * @param queryName The query name.
+   * @param filterName The filter name.
+   * @return A response containing the JSON.
+   */
 	@GET
 	@Produces({"application/json" })
 	public Response getSavedFilters(
@@ -237,17 +235,24 @@ public class FilterRepositoryResource {
 			return Response.serverError().entity(error).build();
 		}
 	}
-	
+
+  /**
+   * Save filter
+   * @summary Save Filter.
+   * @param filterJSON The Filter JSON object.
+   * @return A response containing the filter.
+   */
 	@POST
 	@Produces({"application/json" })
 	@Path("/{filtername}")
-	public Response saveFilter(
+    @ReturnType("org.saiku.olap.dto.filter.SaikuFilter")
+    public Response saveFilter(
 			@FormParam ("filter") String filterJSON)
 	{
 		try {
 			
 			ObjectMapper mapper = new ObjectMapper();
-		    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+		    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
 			SaikuFilter filter = mapper.readValue(filterJSON, SaikuFilter.class);
 			String username = sessionService.getAllSessionObjects().get("username").toString();
 			filter.setOwner(username);
@@ -264,10 +269,17 @@ public class FilterRepositoryResource {
 	}
 
 
+  /**
+   * Delete the filter.
+   * @summary Delete filter
+   * @param filterName The filter name
+   * @return A reponse containing the remaining filters.
+   */
 	@DELETE
 	@Produces({"application/json" })
 	@Path("/{filtername}")
-	public Response deleteFilter(@PathParam("filtername") String filterName)
+    @ReturnType("java.util.Map<String, SaikuFilter>")
+    public Response deleteFilter(@PathParam("filtername") String filterName)
 	{
 		try{
 			if (repo != null) {
@@ -319,9 +331,12 @@ public class FilterRepositoryResource {
 		if ( filterFile != null && filterFile.exists() && filterFile.getContent().getSize() > 0) {
 			InputStreamReader reader = new InputStreamReader(filterFile.getContent().getInputStream());
 			BufferedReader br = new BufferedReader(reader);
-			mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+			mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(JsonAutoDetect.Visibility.ANY));
 			try {
-				filters = mapper.readValue(br, TypeFactory.mapType(HashMap.class, String.class, SaikuFilter.class));
+              TypeFactory tf = mapper.getTypeFactory();
+              MapType mt =
+                  mapper.getTypeFactory().constructMapType(HashMap.class, String.class, SaikuFilter.class);
+				filters = mapper.readValue(br, mt);
 			} catch (EOFException e) {}
 		}
 		return filters;

@@ -1,4 +1,4 @@
-/*  
+/*
  *   Copyright 2012 OSBI Ltd
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
- 
+
 /**
  * Router for opening query when session is initialized
  */
@@ -22,25 +22,25 @@ var QueryRouter = Backbone.Router.extend({
         'query/open/*query_name': 'open_query',
         'query/open': 'open_query_repository'
     },
-    
+
     open_query: function(query_name) {
         Settings.ACTION = "OPEN_QUERY";
         var options = {};
         var dataType = "text";
         if (!Settings.BIPLUGIN5 && Settings.BIPLUGIN) {
-            var file = (Settings.GET.SOLUTION ? (Settings.GET.SOLUTION + "/") : "")
-                        + (Settings.GET.PATH && Settings.GET.PATH != "/" ? (Settings.GET.PATH + "/") : "")
-                        + (Settings.GET.ACTION || "");
+            var file = (Settings.GET.SOLUTION ? (Settings.GET.SOLUTION + "/") : "") +
+                       (Settings.GET.PATH && Settings.GET.PATH != "/" ? (Settings.GET.PATH + "/") : "") +
+                       (Settings.GET.ACTION || "");
             options = {
                 file: file
             };
         } else {
             options = {
                 file: query_name
-            }
+            };
         }
 
-        var params = _.extend({ 
+        var params = _.extend({
                 file: options.file
             }, Settings.PARAMS);
 
@@ -49,6 +49,7 @@ var QueryRouter = Backbone.Router.extend({
                 if (repository && repository.length > 0) {
                     var f = repository[0];
                     var query = new Query(params,{ name: options.file });
+
                     Saiku.tabs.add(new Workspace({ query: query, item: repository[0] }));
 
                 } else {
@@ -58,12 +59,12 @@ var QueryRouter = Backbone.Router.extend({
             }
         };
 
-        var repositoryFile = new Repository({}, { dialog: dialog }).fetch({ async: false, data: { path: options.file }});
-
-        
+		var repositoryFile = new Repository({}, { dialog: dialog, file: options.file }).fetch({ async: false, data: { path: options.file }});
 
 
-        
+
+
+
 
     },
 

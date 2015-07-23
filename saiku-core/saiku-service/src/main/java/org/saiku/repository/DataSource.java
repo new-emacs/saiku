@@ -12,6 +12,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class DataSource {
 
+  private String advanced;
+  private String securitymapping;
+  private String securitytype;
+  private String securityenabled;
+  private String encryptpassword;
     private String id;
     private String type;
     private String name;
@@ -29,6 +34,11 @@ public class DataSource {
         this.username = datasource.getProperties().getProperty("username");
         this.password = datasource.getProperties().getProperty("password");
         this.id = datasource.getProperties().getProperty("id");
+        this.encryptpassword = datasource.getProperties().getProperty("encrypt.password");
+        this.securityenabled = datasource.getProperties().getProperty("security.enabled");
+        this.securitytype = datasource.getProperties().getProperty("security.type");
+        this.securitymapping = datasource.getProperties().getProperty("security.mapping");
+        this.advanced = datasource.getProperties().getProperty("advanced");
     }
 
     public DataSource(){
@@ -105,4 +115,49 @@ public class DataSource {
     public String getPath() {
         return path;
     }
+
+    @XmlElement
+    public String getEncryptpassword() {
+        return encryptpassword;
+    }
+
+    public void setEncryptpassword(String encryptpassword) {
+        this.encryptpassword = encryptpassword;
+    }
+
+  @XmlElement
+  public String getSecuritymapping() {
+    return securitymapping;
+  }
+
+  public void setSecuritymapping(String securitymapping) {
+    this.securitymapping = securitymapping;
+  }
+
+  @XmlElement
+  public String getSecuritytype() {
+    return securitytype;
+  }
+
+  public void setSecuritytype(String securitytype) {
+    this.securitytype = securitytype;
+  }
+
+  @XmlElement
+  public String getSecurityenabled() {
+    return securityenabled;
+  }
+
+  public void setSecurityenabled(String securityenabled) {
+    this.securityenabled = securityenabled;
+  }
+
+  @XmlElement
+  public String getAdvanced() {
+    return advanced;
+  }
+
+  public void setAdvanced(String advanced) {
+    this.advanced = advanced;
+  }
 }

@@ -15,29 +15,29 @@
  */
 package org.saiku.web.rest.resources;
 
+import org.saiku.service.ISessionService;
+import org.saiku.service.user.UserService;
+
+import com.qmino.miredot.annotations.ReturnType;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang.StringUtils;
-import org.saiku.service.ISessionService;
-import org.saiku.service.user.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-
+/**
+ * Saiku Session Endpoints
+ */
 @Component
 @Path("/saiku/session")
 public class SessionResource  {
@@ -48,7 +48,11 @@ public class SessionResource  {
 	private ISessionService sessionService;
     private UserService userService;
 
-    public void setSessionService(ISessionService ss) {
+  public ISessionService getSessionService() {
+	return sessionService;
+  }
+
+  public void setSessionService(ISessionService ss) {
 		this.sessionService = ss;
 	}
 
@@ -56,6 +60,14 @@ public class SessionResource  {
         userService = us;
     }
 
+  /**
+   * Login to Saiku
+   * @summary Login
+   * @param req Servlet request
+   * @param username Username
+   * @param password Password
+   * @return A 200 response
+   */
     @POST
 	@Consumes("application/x-www-form-urlencoded")
 	public Response login(
@@ -73,13 +85,51 @@ public class SessionResource  {
 		}
 	}
 
+  /**
+   * Clear logged in users session.
+   * @summary Login
+   * @param req Servlet request
+   * @param username Username
+   * @param password Password
+   * @return A 200 response
+   */
+  @POST
+  @Path("/clear")
+  @Consumes("application/x-www-form-urlencoded")
+  public Response clearSession(
+	  @Context HttpServletRequest req,
+	  @FormParam("username") String username,
+	  @FormParam("password") String password)
+  {
+	try {
+	  sessionService.clearSessions(req, username, password);
+	  return Response.ok("Session cleared").build();
+	}
+	catch (Exception e) {
+	  log.debug("Error clearing sessions for:" + username, e);
+	  return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getLocalizedMessage()).build();
+	}
+  }
+
+  /**
+   * Get the session in the request
+   * @summary Get session
+   * @param req The servlet request
+   * @return A reponse with a session map
+   */
 	@GET
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String,Object> getSession(@Context HttpServletRequest req) {
-		
-		Map<String, Object> sess = sessionService.getSession();
-		try {
+    @ReturnType("java.util.Map<String, Object>")
+    public Response getSession(@Context HttpServletRequest req) {
+
+	  Map<String, Object> sess = null;
+	  try {
+		sess = sessionService.getSession();
+	  } catch (Exception e) {
+		return Response.serverError().entity(e.getLocalizedMessage()).build();
+	  }
+	  try {
 			String acceptLanguage = req.getLocale().getLanguage();
 			if (StringUtils.isNotBlank(acceptLanguage)) {
 				sess.put("language", acceptLanguage);
@@ -100,9 +150,16 @@ public class SessionResource  {
         catch (Exception e){
             //TODO detect if plugin or not.
         }
-        return sess;
+
+        return Response.ok().entity(sess).build();
 	}
 
+  /**
+   * Logout of the Session
+   * @summary Logout
+   * @param req The servlet request
+   * @return A 200 response.
+   */
 	@DELETE
 	public Response logout(@Context HttpServletRequest req) 
 	{

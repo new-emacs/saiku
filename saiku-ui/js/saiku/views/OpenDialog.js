@@ -42,18 +42,19 @@ var OpenDialog = Modal.extend({
         // Append events
         var self = this;
         var name = "";
-        this.message = "<br/><b><div class='query_name'><span class='i18n'>Please select a file.....</span></div></b><br/><div class='RepositoryObjects'>Loading....</div>"
-                + "<br>"
-                + '<div style="height:25px; line-height:25px;"><b><span class="i18n">Search:</span></b> &nbsp;'
-                + ' <span class="search"><input type="text" class="search_file"></input><span class="cancel_search"></span></span></div>';
+        this.message =  "<br/><b><div class='query_name'><span class='i18n'>Please select a file.....</span></div></b><br/><div class='RepositoryObjects'>Loading....</div>" +
+                        "<br>" +
+                        '<div style="height:25px; line-height:25px;"><b><span class="i18n">Search:</span></b> &nbsp;' +
+                        ' <span class="search"><input type="text" class="search_file"></input><span class="cancel_search"></span></span></div>';
+
         if (Settings.ALLOW_IMPORT_EXPORT) {
-            this.message += "<span class='export_zip'> </span> <b><span class='i18n'>Import or Export Files for Folder</span>: </b> <span class='i18n zip_folder'>< Select Folder... ></span>"
-                + " &nbsp; <input type='submit' value='Export' class='export_btn' disabled /><br/><br />"
-                + "<br /><form id='importForm' target='_blank' method='POST' enctype='multipart/form-data'>" 
-                + "<input type='hidden' name='directory' class='directory'/>" 
-                + "<input type='file' name='file' class='file'/>"
-                + "<input type='submit' value='Import' class='import_btn' disabled />"
-                + "</form>";
+            this.message += "<span class='export_zip'> </span> <b><span class='i18n'>Import or Export Files for Folder</span>: </b> <span class='i18n zip_folder'>< Select Folder... ></span>" +
+                            " &nbsp; <input type='submit' value='Export' class='export_btn' disabled /><br/><br />" +
+                            "<br /><form id='importForm' target='_blank' method='POST' enctype='multipart/form-data'>" +
+                            "<input type='hidden' name='directory' class='directory'/>" +
+                            "<input type='file' name='file' class='file'/>" +
+                            "<input type='submit' value='Import' class='import_btn' disabled />" +
+                            "</form>";
         }
         _.extend(this.options, {
             title: "Open"
@@ -69,9 +70,10 @@ var OpenDialog = Modal.extend({
             if( height > 420 ) {
                 height = 420;
             }
+            var perc = (((($( "body" ).height() - 600) / 2) * 100) / $( "body" ).height());
             $(this.el).find('.RepositoryObjects').height( height );
             $(this.el).dialog( 'option', 'position', 'center' );
-            $(this.el).parents('.ui-dialog').css({ width: "550px" });
+            $(this.el).parents('.ui-dialog').css({ width: "550px", top: perc+'%' });
             $(this.el).find('.dialog_footer').find('a[href="#open_query"]').hide();
 
             self.repository.fetch( );
@@ -148,7 +150,7 @@ var OpenDialog = Modal.extend({
     // XXX - duplicaten from OpenQuery
     search_file: function(event) {
         var filter = $(this.el).find('.search_file').val().toLowerCase();
-        var isEmpty = (typeof filter == "undefined" || filter == "" || filter == null);
+        var isEmpty = (typeof filter == "undefined" || filter === "" || filter === null);
         if (isEmpty || event.which == 27 || event.which == 9) {
             this.cancel_search();
         } else {
@@ -157,7 +159,7 @@ var OpenDialog = Modal.extend({
             } else {
                 $(this.el).find('.cancel_search').hide();
             }
-            $(this.el).find('li.query').removeClass('hide')
+            $(this.el).find('li.query').removeClass('hide');
             $(this.el).find('li.query a').filter(function (index) { 
                 return $(this).text().toLowerCase().indexOf(filter) == -1; 
             }).parent().addClass('hide');
@@ -184,7 +186,7 @@ var OpenDialog = Modal.extend({
 
     export_zip: function(event) {
         var file = this.selected_folder;
-        if (typeof file != "undefined" && file != "") {
+        if (typeof file != "undefined" && file !== "") {
             var url = Settings.REST_URL + (new RepositoryZipExport({ directory : file })).url();
             window.open(url + "?directory=" + file + "&type=saiku");
         }
@@ -193,7 +195,7 @@ var OpenDialog = Modal.extend({
     select_folder: function() {
         var foldersSelected = $( this.el ).find( '.selected' );
         var file = foldersSelected.length > 0 ? foldersSelected.children('a').attr('href').replace('#','') : null;
-        if (typeof file != "undefined" && file != null && file != "") {
+        if (typeof file != "undefined" && file !== null && file !== "") {
             var form = $('#importForm');
             form.find('.directory').val(file);
             var url = Settings.REST_URL + (new RepositoryZipExport()).url() + "upload";
@@ -211,7 +213,7 @@ var OpenDialog = Modal.extend({
     select_file: function() {
             var form = $('#importForm');
             var filename = form.find('.file').val();
-            if (typeof filename != "undefined" && filename != "" && filename != null && this.selected_folder != null) {
+            if (typeof filename != "undefined" && filename !== "" && filename !== null && this.selected_folder !== null) {
                 $(this.el).find('.import_btn').removeAttr('disabled');
             } else {
                 $(this.el).find('.import_btn').attr('disabled', 'true');

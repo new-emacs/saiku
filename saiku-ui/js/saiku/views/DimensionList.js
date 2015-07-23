@@ -14,7 +14,6 @@
  *   limitations under the License.
  */
  
-
 /**
  * Controls the appearance and behavior of the dimension list
  * 
@@ -112,8 +111,7 @@ var DimensionList = Backbone.View.extend({
     },
     
     select: function(event) {
-        var $target = $(event.target).hasClass('root')
-            ? $(event.target) : $(event.target).parent().find('span');
+        var $target = $(event.target).hasClass('root') ? $(event.target) : $(event.target).parent().find('span');
         if ($target.hasClass('root')) {
             $target.find('a').toggleClass('folder_collapsed').toggleClass('folder_expand');
             $target.toggleClass('collapsed').toggleClass('expand');
@@ -149,6 +147,10 @@ var DimensionList = Backbone.View.extend({
             axisName = $axis.parents('.fields_list').attr('title');
         }
         this.workspace.query.helper.includeLevel(axisName, hierarchy, level);
+
+        // Trigger event when select dimension
+        Saiku.session.trigger('dimensionList:select_dimension', { workspace: this.workspace });
+
         this.workspace.sync_query();
         this.workspace.query.run();
         event.preventDefault();
@@ -159,8 +161,6 @@ var DimensionList = Backbone.View.extend({
         if ($(event.target).parent().hasClass('ui-state-disabled')) {
             return;
         }
-        
-        
         var $target = $(event.target).parent().clone();
         var measure = {
             "name": $target.find('a').attr('measure'),
@@ -175,9 +175,8 @@ var DimensionList = Backbone.View.extend({
 
     measure_dialog: function(event, ui) {
         (new MeasuresModal({ 
-                                    workspace: this.workspace,
-                                    measure: null
+            workspace: this.workspace,
+            measure: null
         })).render().open();
     }
-
 });
